@@ -1,1 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory - IO DSS</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="layout">
+        <div id="sidebar-placeholder"></div>
+        <main class="content">
+            <h1>Inventory Levels</h1>
+            <table class="table" id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Stock</th>
+                        <th>Reorder Point</th>
+                        <th>Safety Stock</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="inventory-list">
+                    <tr><td colspan="7">Loading...</td></tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
 
+    <!-- Modal for Update Stock -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Update Stock</h2>
+            <form id="stockForm">
+                <input type="hidden" id="stockProductId">
+                <div class="form-group">
+                    <label for="newStock">New Stock Quantity</label>
+                    <input type="number" id="newStock" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Update</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="config/config.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/inventory.js"></script>
+    <script>
+        fetch('components/navbar.html')
+            .then(res => res.text())
+            .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+        fetch('components/sidebar.html')
+            .then(res => res.text())
+            .then(data => document.getElementById('sidebar-placeholder').innerHTML = data);
+    </script>
+</body>
+</html>

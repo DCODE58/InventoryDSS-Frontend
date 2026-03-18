@@ -1,1 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory Optimization DSS</title>
 
+<!-- Ionicons -->
+<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
+<style>
+    :root {
+        --primary-blue: #00a8ff;
+        --light-blue: #0097e6;
+        --dark-blue: #0077b6;
+        --black: #121212;
+        --dark-gray: #1e1e1e;
+        --white: #f5f6fa;
+        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        --glow: 0 0 15px rgba(0, 170, 255, 0.473);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        min-height: 100vh;
+        background: var(--black);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        position: relative;
+        overflow-x: hidden;
+        padding: 20px;
+    }
+
+    /* Animated gradient overlay */
+    body::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 70% 40%, rgba(0, 168, 255, 0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 30% 80%, rgba(0, 151, 230, 0.1) 0%, transparent 50%),
+                    repeating-linear-gradient(45deg, transparent 0px, transparent 20px, rgba(0, 168, 255, 0.02) 20px, rgba(0, 168, 255, 0.02) 40px);
+        animation: moveGradient 25s ease-in-out infinite alternate;
+        z-index: 0;
+    }
+
+    @keyframes moveGradient {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        100% { transform: translate(5%, 5%) rotate(3deg); }
+    }
+
+    .container {
+        text-align: center;
+        animation: fadeInScale 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+        position: relative;
+        z-index: 2;
+        width: 75%;              /* cover 75% of the screen width */
+        max-width: 1400px;       /* prevent excessive stretching on ultra-wide screens */
+        margin: 0 auto;
+        padding: 0;
+    }
+
+    @keyframes fadeInScale {
+        0% {
+            opacity: 0;
+            transform: scale(0.9) translateY(30px);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+
+    .card {
+        backdrop-filter: blur(15px);
+        background: rgba(30, 30, 30, 0.7);
+        padding: 60px 50px;       /* increased padding for larger card */
+        border-radius: 40px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5), var(--glow);
+        width: 100%;              /* fill the container */
+        border: 1px solid rgba(0, 168, 255, 0.2);
+        transition: var(--transition);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .card:hover {
+        box-shadow: 0 30px 50px rgba(0,0,0,0.7), 0 0 30px rgba(0, 168, 255, 0.6);
+        border-color: rgba(0, 168, 255, 0.5);
+        transform: translateY(-5px);
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+
+    img {
+        width: 120px;             /* slightly larger logo */
+        margin-bottom: 25px;
+        filter: drop-shadow(0 0 15px rgba(0, 168, 255, 0.5));
+        transition: var(--transition);
+        animation: pulseGlow 3s infinite alternate;
+    }
+
+    img:hover {
+        transform: rotate(5deg) scale(1.05);
+        filter: drop-shadow(0 0 25px rgba(0, 168, 255, 0.9));
+    }
+
+    @keyframes pulseGlow {
+        0% { filter: drop-shadow(0 0 5px rgba(0, 168, 255, 0.3)); }
+        100% { filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.8)); }
+    }
+
+    h1 {
+        font-size: 3.2rem;        /* increased size */
+        margin-bottom: 20px;
+        line-height: 1.2;
+        background: linear-gradient(135deg, var(--white) 0%, var(--primary-blue) 80%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 5px 15px rgba(0,168,255,0.2);
+        animation: slideInRight 1s ease-out;
+    }
+
+    @keyframes slideInRight {
+        0% { opacity: 0; transform: translateX(30px); }
+        100% { opacity: 1; transform: translateX(0); }
+    }
+
+    p {
+        font-size: 1.3rem;
+        margin-bottom: 35px;
+        opacity: 0.9;
+        animation: fadeInUp 1s 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .features {
+        margin-bottom: 40px;
+        font-size: 1.2rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .features span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0;
+        padding: 10px 22px;
+        background: rgba(0, 168, 255, 0.1);
+        border-radius: 60px;
+        backdrop-filter: blur(4px);
+        border: 1px solid rgba(0, 168, 255, 0.3);
+        transition: var(--transition);
+        animation: fadeInUp 1s 0.4s both;
+    }
+
+    .features span:hover {
+        background: rgba(0, 168, 255, 0.25);
+        transform: translateY(-5px) scale(1.05);
+        box-shadow: var(--glow);
+        border-color: var(--primary-blue);
+    }
+
+    .features ion-icon {
+        font-size: 1.5rem;
+        color: var(--primary-blue);
+        --ionicon-stroke-width: 32px;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 18px 50px;
+        background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+        color: var(--white);
+        border-radius: 60px;
+        text-decoration: none;
+        font-weight: bold;
+        letter-spacing: 0.5px;
+        transition: var(--transition);
+        box-shadow: 0 10px 25px rgba(0, 168, 255, 0.3);
+        border: none;
+        position: relative;
+        overflow: hidden;
+        font-size: 1.2rem;
+        animation: fadeInUp 1s 0.6s both;
+    }
+
+    .btn::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .btn:hover {
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 20px 35px rgba(0, 168, 255, 0.6);
+        background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
+    }
+
+    .btn:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    footer {
+        margin-top: 30px;
+        font-size: 0.9rem;
+        opacity: 0.7;
+        animation: fadeIn 2s 0.8s both;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 0.7; }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+        .container {
+            width: 90%;
+        }
+
+        .card {
+            padding: 40px 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+        }
+
+        .features span {
+            padding: 8px 16px;
+            font-size: 1rem;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .card {
+            padding: 30px 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+
+        .features span {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <div class="card">
+        <img src="assets/images/logo.png" alt="Logo">
+
+        <h1>Smart Inventory Optimization DSS</h1>
+
+        <p>Make smarter decisions with intelligent forecasting and optimization.</p>
+
+        <div class="features">
+            <span><ion-icon name="bar-chart-outline"></ion-icon> Predict Demand</span>
+            <span><ion-icon name="cube-outline"></ion-icon> Optimize Stock</span>
+            <span><ion-icon name="alert-circle-outline"></ion-icon> Real-Time Alerts</span>
+        </div>
+
+        <a href="dashboard.html" class="btn">Enter Dashboard →</a>
+    </div>
+
+    <footer>
+        © 2026 Inventory DSS • Built for Decision Support Systems
+    </footer>
+</div>
+
+</body>
+</html>

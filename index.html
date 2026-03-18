@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
 <title>Inventory Optimization DSS</title>
 
-<!-- Ionicons -->
 <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
 <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
@@ -24,7 +23,7 @@
     * {
         margin: 0;
         padding: 0;
-        box-sizing: border-box;
+        box-sizing: border-box; /* Crucial for preventing overflow */
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
@@ -32,32 +31,35 @@
         min-height: 100vh;
         background: var(--black);
         display: flex;
+        flex-direction: column; /* Better for mobile stacking */
         align-items: center;
         justify-content: center;
         color: var(--white);
         position: relative;
-        overflow-x: hidden;
+        overflow-x: hidden;      
+        width: 100%;
         padding: 20px;
     }
 
-    /* Animated gradient overlay */
+    /* Animated gradient overlay - Fixed to prevent overflow */
     body::before {
         content: '';
-        position: absolute;
-        top: -50%;
-        left: -50%;
-        width: 200%;
-        height: 200%;
+        position: fixed; /* Fixed instead of absolute to stay in viewport */
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
         background: radial-gradient(circle at 70% 40%, rgba(0, 168, 255, 0.15) 0%, transparent 50%),
                     radial-gradient(circle at 30% 80%, rgba(0, 151, 230, 0.1) 0%, transparent 50%),
                     repeating-linear-gradient(45deg, transparent 0px, transparent 20px, rgba(0, 168, 255, 0.02) 20px, rgba(0, 168, 255, 0.02) 40px);
         animation: moveGradient 25s ease-in-out infinite alternate;
         z-index: 0;
+        pointer-events: none;
     }
 
     @keyframes moveGradient {
-        0% { transform: translate(0, 0) rotate(0deg); }
-        100% { transform: translate(5%, 5%) rotate(3deg); }
+        0% { transform: scale(1) rotate(0deg); }
+        100% { transform: scale(1.1) rotate(2deg); }
     }
 
     .container {
@@ -65,30 +67,21 @@
         animation: fadeInScale 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
         position: relative;
         z-index: 2;
-        width: 75%;
-        max-width: 1400px;
+        width: 100%; /* Default to full width for mobile first */
+        max-width: 1100px; /* Adjusted for better desktop viewing */
         margin: 0 auto;
-        padding: 0;
     }
 
     @keyframes fadeInScale {
-        0% {
-            opacity: 0;
-            transform: scale(0.9) translateY(30px);
-        }
-        100% {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
+        0% { opacity: 0; transform: scale(0.9) translateY(30px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .card {
-        /* Glassy effect */
         background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        
         padding: 60px 50px;
         border-radius: 40px;
         box-shadow: 0 20px 40px rgba(0,0,0,0.5), var(--glow);
@@ -101,64 +94,39 @@
         box-shadow: 0 30px 50px rgba(0,0,0,0.7), 0 0 30px rgba(0, 168, 255, 0.6);
         border-color: rgba(0, 168, 255, 0.5);
         transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.08); /* slightly brighter on hover */
     }
 
     @keyframes float {
-        0% { transform: translateY(0px); }
+        0%, 100% { transform: translateY(0px); }
         50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
     }
 
     img {
-        width: 120px;
+        width: 100px;
+        max-width: 100%;
+        height: auto;
         margin-bottom: 25px;
         filter: drop-shadow(0 0 15px rgba(0, 168, 255, 0.5));
-        transition: var(--transition);
-        animation: pulseGlow 3s infinite alternate;
-    }
-
-    img:hover {
-        transform: rotate(5deg) scale(1.05);
-        filter: drop-shadow(0 0 25px rgba(0, 168, 255, 0.9));
-    }
-
-    @keyframes pulseGlow {
-        0% { filter: drop-shadow(0 0 5px rgba(0, 168, 255, 0.3)); }
-        100% { filter: drop-shadow(0 0 20px rgba(0, 168, 255, 0.8)); }
     }
 
     h1 {
-        font-size: 3.2rem;
+        font-size: clamp(1.8rem, 5vw, 3.2rem); /* Fluid typography */
         margin-bottom: 20px;
         line-height: 1.2;
         background: linear-gradient(135deg, var(--white) 0%, var(--primary-blue) 80%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        text-shadow: 0 5px 15px rgba(0,168,255,0.2);
-        animation: slideInRight 1s ease-out;
-    }
-
-    @keyframes slideInRight {
-        0% { opacity: 0; transform: translateX(30px); }
-        100% { opacity: 1; transform: translateX(0); }
+        word-wrap: break-word;
     }
 
     p {
-        font-size: 1.3rem;
+        font-size: clamp(1rem, 2vw, 1.3rem);
         margin-bottom: 35px;
         opacity: 0.9;
-        animation: fadeInUp 1s 0.2s both;
-    }
-
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
     }
 
     .features {
         margin-bottom: 40px;
-        font-size: 1.2rem;
         display: flex;
         flex-wrap: wrap;
         justify-content: center;
@@ -169,32 +137,18 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        margin: 0;
         padding: 10px 22px;
-        /* Glassy effect for feature badges */
         background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(2px);
-        -webkit-backdrop-filter: blur(2px);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        
         border-radius: 60px;
-        transition: var(--transition);
-        animation: fadeInUp 1s 0.4s both;
-        color: var(--white);
-    }
-
-    .features span:hover {
-        background: rgba(0, 168, 255, 0.2);
-        border-color: var(--primary-blue);
-        transform: translateY(-5px) scale(1.05);
-        box-shadow: var(--glow);
+        font-size: 0.95rem;
+        white-space: nowrap; /* Keeps icon and text together */
     }
 
     .features ion-icon {
-        font-size: 1.5rem;
+        font-size: 1.2rem;
         color: var(--primary-blue);
-        --ionicon-stroke-width: 32px;
-        filter: drop-shadow(0 0 5px var(--primary-blue));
+        flex-shrink: 0;
     }
 
     .btn {
@@ -205,101 +159,54 @@
         border-radius: 60px;
         text-decoration: none;
         font-weight: bold;
-        letter-spacing: 0.5px;
         transition: var(--transition);
         box-shadow: 0 10px 25px rgba(0, 168, 255, 0.3);
-        border: none;
-        position: relative;
-        overflow: hidden;
-        font-size: 1.2rem;
-        animation: fadeInUp 1s 0.6s both;
-    }
-
-    .btn::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 0;
-        height: 0;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.3);
-        transform: translate(-50%, -50%);
-        transition: width 0.6s, height 0.6s;
+        max-width: 100%;
     }
 
     .btn:hover {
-        transform: translateY(-4px) scale(1.05);
+        transform: translateY(-4px) scale(1.03);
         box-shadow: 0 20px 35px rgba(0, 168, 255, 0.6);
-        background: linear-gradient(135deg, var(--light-blue), var(--primary-blue));
-    }
-
-    .btn:hover::before {
-        width: 300px;
-        height: 300px;
     }
 
     footer {
         margin-top: 30px;
-        font-size: 0.9rem;
-        opacity: 0.7;
-        animation: fadeIn 2s 0.8s both;
+        font-size: 0.85rem;
+        opacity: 0.6;
     }
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 0.7; }
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 900px) {
+    /* Media Queries for Desktop */
+    @media (min-width: 768px) {
         .container {
-            width: 90%;
-        }
-
-        .card {
-            padding: 40px 30px;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-        }
-
-        p {
-            font-size: 1.1rem;
-        }
-
-        .features span {
-            padding: 8px 16px;
-            font-size: 1rem;
+            width: 85%;
         }
     }
 
-    @media (max-width: 600px) {
+    /* Media Queries for Phone */
+    @media (max-width: 480px) {
+        body {
+            padding: 15px;
+        }
         .card {
-            padding: 30px 20px;
+            padding: 40px 20px;
         }
-
-        h1 {
-            font-size: 2rem;
-        }
-
         .features span {
-            padding: 6px 12px;
-            font-size: 0.9rem;
+            width: 100%; /* Stacks features for very narrow phones */
+            justify-content: center;
+        }
+        .btn {
+            width: 100%; /* Makes button easier to tap on mobile */
+            padding: 16px 20px;
         }
     }
 </style>
 </head>
-
 <body>
 
 <div class="container">
     <div class="card">
         <img src="assets/images/logo.png" alt="Logo">
-
         <h1>Smart Inventory Optimization DSS</h1>
-
         <p>Make smarter decisions with intelligent forecasting and optimization.</p>
 
         <div class="features">

@@ -9,7 +9,7 @@ The **Smart Inventory Optimization Decision Support System (IO-DSS)** frontend i
 
 ---
 
-## ✨ Features
+## Features
 
 - **Dashboard** – Overview of key metrics: total products, low stock items, reorder alerts, and forecasted demand.
 - **Product Management** – Add, edit, and delete products with cost and price details.
@@ -21,7 +21,7 @@ The **Smart Inventory Optimization Decision Support System (IO-DSS)** frontend i
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Component          | Technology                     |
 |--------------------|--------------------------------|
@@ -35,7 +35,7 @@ The **Smart Inventory Optimization Decision Support System (IO-DSS)** frontend i
 
 ---
 
-## 📁 Folder Structure
+## Folder Structure
 
 ```
 frontend/
@@ -80,7 +80,7 @@ frontend/
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - A modern web browser (Chrome, Firefox, Edge, etc.)
@@ -130,7 +130,7 @@ frontend/
 
 ---
 
-## 📱 Usage Guide
+## Usage Guide
 
 1. **Dashboard**  
    - View summary cards and recent alerts.
@@ -151,7 +151,7 @@ frontend/
 
 ---
 
-## 🔌 API Integration
+## API Integration
 
 All backend communication is handled by `assets/js/api.js`, which exports an `api` object with methods like:
 
@@ -165,30 +165,29 @@ The base URL is taken from `config/config.js`. Ensure this points to your live b
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-(Add screenshots of your dashboard, products, inventory pages here.)
+*(Add screenshots of your dashboard, products, inventory pages here.)*
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🙏 Acknowledgements
+## Acknowledgements
 
 - [Chart.js](https://www.chartjs.org/) for beautiful charts.
 - [Font Awesome](https://fontawesome.com/) for icons.
 - [Flask](https://flask.palletsprojects.com/) for the backend API.
-
 ```
 
-This README is detailed, professional, and follows your request: no excessive emojis, but uses simple icons for headings. It includes all necessary sections and can be customized further with actual screenshots and links.
+This markdown document is properly formatted and ready to be used as the `README.md` for your frontend repository. It contains all sections, is detailed, and avoids excessive emoji usage. You can copy it directly into your project.

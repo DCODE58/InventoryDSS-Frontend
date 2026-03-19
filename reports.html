@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - IO DSS</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/components.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="layout">
+        <div id="sidebar-placeholder"></div>
+        <main class="content">
+            <h1>Reports & Analytics</h1>
+            <div class="row">
+                <section class="card">
+                    <h2>Sales History (Last 7 Days)</h2>
+                    <canvas id="sales-chart" width="400" height="200"></canvas>
+                </section>
+                <section class="card">
+                    <h2>Forecasted Demand (Next 30 Days)</h2>
+                    <canvas id="forecast-chart" width="400" height="200"></canvas>
+                </section>
+            </div>
+            <section class="card">
+                <h2>Optimization Parameters</h2>
+                <div id="optimization-results">
+                    <p>Loading EOQ and ROP data...</p>
+                </div>
+            </section>
+        </main>
+    </div>
 
+    <script src="config/config.js"></script>
+    <script src="utils/constants.js"></script>
+    <script src="utils/helpers.js"></script>
+    <script src="assets/js/api.js"></script>
+    <script src="assets/js/app.js"></script>
+    <script src="assets/js/reports.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        fetch('components/navbar.html')
+            .then(res => res.text())
+            .then(data => document.getElementById('navbar-placeholder').innerHTML = data);
+        fetch('components/sidebar.html')
+            .then(res => res.text())
+            .then(data => document.getElementById('sidebar-placeholder').innerHTML = data);
+    </script>
+</body>
+</html>

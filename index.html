@@ -1,227 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-<title>Inventory Optimization DSS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>IO-DSS | Smart Inventory Optimization</title>
 
-<script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-<script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/layout.css">
+    <link rel="stylesheet" href="assets/css/components.css">
 
-<style>
-    :root {
-        --primary-blue: #00a8ff;
-        --light-blue: #0097e6;
-        --dark-blue: #0077b6;
-        --black: #121212;
-        --dark-gray: #1e1e1e;
-        --white: #f5f6fa;
-        --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        --glow: 0 0 15px rgba(0, 170, 255, 0.473);
-    }
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box; /* Crucial for preventing overflow */
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-        min-height: 100vh;
-        background: var(--black);
-        display: flex;
-        flex-direction: column; /* Better for mobile stacking */
-        align-items: center;
-        justify-content: center;
-        color: var(--white);
-        position: relative;
-        overflow-x: hidden;      
-        width: 100%;
-        padding: 20px;
-    }
-
-    /* Animated gradient overlay - Fixed to prevent overflow */
-    body::before {
-        content: '';
-        position: fixed; /* Fixed instead of absolute to stay in viewport */
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(circle at 70% 40%, rgba(0, 168, 255, 0.15) 0%, transparent 50%),
-                    radial-gradient(circle at 30% 80%, rgba(0, 151, 230, 0.1) 0%, transparent 50%),
-                    repeating-linear-gradient(45deg, transparent 0px, transparent 20px, rgba(0, 168, 255, 0.02) 20px, rgba(0, 168, 255, 0.02) 40px);
-        animation: moveGradient 25s ease-in-out infinite alternate;
-        z-index: 0;
-        pointer-events: none;
-    }
-
-    @keyframes moveGradient {
-        0% { transform: scale(1) rotate(0deg); }
-        100% { transform: scale(1.1) rotate(2deg); }
-    }
-
-    .container {
-        text-align: center;
-        animation: fadeInScale 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-        position: relative;
-        z-index: 2;
-        width: 100%; /* Default to full width for mobile first */
-        max-width: 1100px; /* Adjusted for better desktop viewing */
-        margin: 0 auto;
-    }
-
-    @keyframes fadeInScale {
-        0% { opacity: 0; transform: scale(0.9) translateY(30px); }
-        100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    .card {
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 60px 50px;
-        border-radius: 40px;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.5), var(--glow);
-        width: 100%;
-        transition: var(--transition);
-        animation: float 6s ease-in-out infinite;
-    }
-
-    .card:hover {
-        box-shadow: 0 30px 50px rgba(0,0,0,0.7), 0 0 30px rgba(0, 168, 255, 0.6);
-        border-color: rgba(0, 168, 255, 0.5);
-        transform: translateY(-5px);
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-    }
-
-    img {
-        width: 100px;
-        max-width: 100%;
-        height: auto;
-        margin-bottom: 25px;
-        filter: drop-shadow(0 0 15px rgba(0, 168, 255, 0.5));
-    }
-
-    h1 {
-        font-size: clamp(1.8rem, 5vw, 3.2rem); /* Fluid typography */
-        margin-bottom: 20px;
-        line-height: 1.2;
-        background: linear-gradient(135deg, var(--white) 0%, var(--primary-blue) 80%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        word-wrap: break-word;
-    }
-
-    p {
-        font-size: clamp(1rem, 2vw, 1.3rem);
-        margin-bottom: 35px;
-        opacity: 0.9;
-    }
-
-    .features {
-        margin-bottom: 40px;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    .features span {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 22px;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 60px;
-        font-size: 0.95rem;
-        white-space: nowrap; /* Keeps icon and text together */
-    }
-
-    .features ion-icon {
-        font-size: 1.2rem;
-        color: var(--primary-blue);
-        flex-shrink: 0;
-    }
-
-    .btn {
-        display: inline-block;
-        padding: 18px 50px;
-        background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
-        color: var(--white);
-        border-radius: 60px;
-        text-decoration: none;
-        font-weight: bold;
-        transition: var(--transition);
-        box-shadow: 0 10px 25px rgba(0, 168, 255, 0.3);
-        max-width: 100%;
-    }
-
-    .btn:hover {
-        transform: translateY(-4px) scale(1.03);
-        box-shadow: 0 20px 35px rgba(0, 168, 255, 0.6);
-    }
-
-    footer {
-        margin-top: 30px;
-        font-size: 0.85rem;
-        opacity: 0.6;
-    }
-
-    /* Media Queries for Desktop */
-    @media (min-width: 768px) {
-        .container {
-            width: 85%;
-        }
-    }
-
-    /* Media Queries for Phone */
-    @media (max-width: 480px) {
-        body {
-            padding: 15px;
-        }
-        .card {
-            padding: 40px 20px;
-        }
-        .features span {
-            width: 100%; /* Stacks features for very narrow phones */
-            justify-content: center;
-        }
-        .btn {
-            width: 100%; /* Makes button easier to tap on mobile */
-            padding: 16px 20px;
-        }
-    }
-</style>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
+<div class="app">
 
-<div class="container">
-    <div class="card">
-        <img src="assets/images/logo.png" alt="Logo">
-        <h1>Smart Inventory Optimization DSS</h1>
-        <p>Make smarter decisions with intelligent forecasting and optimization.</p>
-
-        <div class="features">
-            <span><ion-icon name="bar-chart-outline"></ion-icon> Predict Demand</span>
-            <span><ion-icon name="cube-outline"></ion-icon> Optimize Stock</span>
-            <span><ion-icon name="alert-circle-outline"></ion-icon> Real-Time Alerts</span>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="assets/images/logo.png" alt="IO-DSS Logo">
         </div>
+        <ul>
+            <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+            <li><a href="#" data-page="products"><i class="fas fa-cube"></i> Products</a></li>
+            <li><a href="#" data-page="inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
+            <li><a href="#" data-page="sales"><i class="fas fa-shopping-cart"></i> Sales</a></li>
+        </ul>
+    </aside>
 
-        <a href="dashboard.html" class="btn">Enter Dashboard →</a>
-    </div>
+    <!-- Main Content -->
+    <main class="main-content">
 
-    <footer>
-        © 2026 Inventory DSS • Built for Decision Support Systems
-    </footer>
+        <!-- Navbar -->
+        <nav class="navbar">
+            <div class="menu-toggle" id="menuToggle">
+                <i class="fas fa-bars"></i>
+            </div>
+            <div class="logo">📦 IO-DSS</div>
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i>
+                <span>Admin</span>
+            </div>
+        </nav>
+
+        <div class="page-container">
+
+            <!-- ================= DASHBOARD ================= -->
+            <section id="dashboard" class="page active">
+                <h1>Dashboard</h1>
+
+                <!-- Stats -->
+                <div class="stats-grid">
+                    <div class="card">
+                        <h3>Total Products</h3>
+                        <p class="stat-value" id="total-products">-</p>
+                    </div>
+                    <div class="card">
+                        <h3>Low Stock Items</h3>
+                        <p class="stat-value" id="low-stock">-</p>
+                    </div>
+                    <div class="card">
+                        <h3>Reorder Alerts</h3>
+                        <p class="stat-value" id="reorder-alerts">-</p>
+                    </div>
+                    <div class="card">
+                        <h3>Forecasted Demand</h3>
+                        <p class="stat-value" id="forecast-demand">-</p>
+                    </div>
+                </div>
+
+                <!-- Alerts + EOQ -->
+                <div class="row">
+                    <div class="card alerts-section">
+                        <h2><i class="fas fa-exclamation-triangle"></i> ROP Alerts</h2>
+                        <div id="rop-alerts-list"></div>
+                        <div id="rop-error" class="error-text hidden">Failed to load alerts</div>
+                    </div>
+
+                    <div class="card eoq-section">
+                        <h2><i class="fas fa-boxes"></i> EOQ Recommendations</h2>
+                        <div id="eoq-list"></div>
+                        <div id="eoq-error" class="error-text hidden">Failed to load EOQ data</div>
+                    </div>
+                </div>
+
+                <!-- Forecast -->
+                <div class="card forecast-section">
+                    <h2><i class="fas fa-chart-line"></i> Demand Forecast (Next 30 Days)</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="forecast-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Telegram -->
+                <div class="card telegram-preview">
+                    <h2><i class="fab fa-telegram"></i> Telegram Alerts</h2>
+                    <div id="telegram-preview"></div>
+                </div>
+            </section>
+
+            <!-- ================= PRODUCTS ================= -->
+            <section id="products" class="page hidden">
+                <h1>Product Management</h1>
+
+                <button class="btn btn-primary" id="add-product-btn">
+                    <i class="fas fa-plus"></i> Add Product
+                </button>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Cost ($)</th>
+                                <th>Price ($)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list">
+                            <tr><td colspan="5">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ================= INVENTORY ================= -->
+            <section id="inventory" class="page hidden">
+                <h1>Inventory Levels</h1>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                             <tr>
+                                <th>Product ID</th>
+                                <th>Product Name</th>
+                                <th>Stock</th>
+                                <th>Reorder Point</th>
+                                <th>Safety Stock</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                             </tr>
+                        </thead>
+                        <tbody id="inventory-list">
+                            <tr><td colspan="7">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ================= SALES ================= -->
+            <section id="sales" class="page hidden">
+                <h1>Record Sale</h1>
+
+                <div class="card">
+                    <form id="sales-form">
+                        <div class="form-group">
+                            <label for="product-id">Product</label>
+                            <select id="product-id" required>
+                                <option value="">Select Product</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" id="quantity" min="1" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            Record Sale
+                        </button>
+                    </form>
+                </div>
+
+                <h2>Recent Sales</h2>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                             <tr>
+                                <th>Sale ID</th>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Date</th>
+                             </tr>
+                        </thead>
+                        <tbody id="recent-sales-list">
+                            <tr><td colspan="4">No sales recorded yet</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+        </div>
+    </main>
 </div>
+
+<!-- ================= MODALS ================= -->
+
+<div id="product-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2 id="modal-title">Add Product</h2>
+
+        <form id="product-form">
+            <input type="hidden" id="product-id-edit">
+
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="product-name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Cost ($)</label>
+                <input type="number" step="0.01" id="product-cost" required>
+            </div>
+
+            <div class="form-group">
+                <label>Price ($)</label>
+                <input type="number" step="0.01" id="product-price" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+
+<div id="stock-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Update Stock</h2>
+
+        <form id="stock-form">
+            <input type="hidden" id="stock-product-id">
+
+            <div class="form-group">
+                <label>New Stock Quantity</label>
+                <input type="number" id="new-stock" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Update</button>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="config/config.js" defer></script>
+<script src="utils/constants.js" defer></script>
+<script src="utils/helpers.js" defer></script>
+<script src="assets/js/toast.js" defer></script>
+<script src="assets/js/api.js" defer></script>
+<script src="assets/js/app.js" defer></script>
+<script src="assets/js/dashboard.js" defer></script>
+<script src="assets/js/products.js" defer></script>
+<script src="assets/js/inventory.js" defer></script>
+<script src="assets/js/sales.js" defer></script>
 
 </body>
 </html>

@@ -58,19 +58,19 @@
                 <div class="stats-grid">
                     <div class="card">
                         <h3>Total Products</h3>
-                        <p class="stat-value" id="total-products">-</p>
+                        <p class="stat-value" id="total-products">—</p>
                     </div>
                     <div class="card">
                         <h3>Low Stock Items</h3>
-                        <p class="stat-value" id="low-stock">-</p>
+                        <p class="stat-value" id="low-stock">—</p>
                     </div>
                     <div class="card">
                         <h3>Reorder Alerts</h3>
-                        <p class="stat-value" id="reorder-alerts">-</p>
+                        <p class="stat-value" id="reorder-alerts">—</p>
                     </div>
                     <div class="card">
-                        <h3>Forecasted Demand</h3>
-                        <p class="stat-value" id="forecast-demand">-</p>
+                        <h3>Forecasted Demand (30d)</h3>
+                        <p class="stat-value" id="forecast-demand">—</p>
                     </div>
                 </div>
 
@@ -137,7 +137,7 @@
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
-                             <tr>
+                            <tr>
                                 <th>Product ID</th>
                                 <th>Product Name</th>
                                 <th>Stock</th>
@@ -145,7 +145,7 @@
                                 <th>Safety Stock</th>
                                 <th>Status</th>
                                 <th>Action</th>
-                             </tr>
+                            </tr>
                         </thead>
                         <tbody id="inventory-list">
                             <tr><td colspan="7">Loading...</td></tr>
@@ -172,9 +172,7 @@
                             <input type="number" id="quantity" min="1" required>
                         </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            Record Sale
-                        </button>
+                        <button type="submit" class="btn btn-primary">Record Sale</button>
                     </form>
                 </div>
 
@@ -183,12 +181,12 @@
                 <div class="table-wrapper">
                     <table class="data-table">
                         <thead>
-                             <tr>
+                            <tr>
                                 <th>Sale ID</th>
                                 <th>Product</th>
                                 <th>Quantity</th>
                                 <th>Date</th>
-                             </tr>
+                            </tr>
                         </thead>
                         <tbody id="recent-sales-list">
                             <tr><td colspan="4">No sales recorded yet</td></tr>
@@ -207,25 +205,20 @@
     <div class="modal-content">
         <span class="close-modal">&times;</span>
         <h2 id="modal-title">Add Product</h2>
-
         <form id="product-form">
             <input type="hidden" id="product-id-edit">
-
             <div class="form-group">
                 <label>Product Name</label>
                 <input type="text" id="product-name" required>
             </div>
-
             <div class="form-group">
                 <label>Cost ($)</label>
                 <input type="number" step="0.01" id="product-cost" required>
             </div>
-
             <div class="form-group">
                 <label>Price ($)</label>
                 <input type="number" step="0.01" id="product-price" required>
             </div>
-
             <button type="submit" class="btn btn-primary">Save</button>
         </form>
     </div>
@@ -235,31 +228,37 @@
     <div class="modal-content">
         <span class="close-modal">&times;</span>
         <h2>Update Stock</h2>
-
         <form id="stock-form">
             <input type="hidden" id="stock-product-id">
-
             <div class="form-group">
                 <label>New Stock Quantity</label>
-                <input type="number" id="new-stock" required>
+                <input type="number" id="new-stock" min="0" required>
             </div>
-
             <button type="submit" class="btn btn-primary">Update</button>
         </form>
     </div>
 </div>
 
-<!-- Scripts -->
-<script src="config/config.js" defer></script>
-<script src="utils/constants.js" defer></script>
-<script src="utils/helpers.js" defer></script>
-<script src="assets/js/toast.js" defer></script>
-<script src="assets/js/api.js" defer></script>
-<script src="assets/js/app.js" defer></script>
-<script src="assets/js/dashboard.js" defer></script>
-<script src="assets/js/products.js" defer></script>
-<script src="assets/js/inventory.js" defer></script>
-<script src="assets/js/sales.js" defer></script>
+<!--
+    Script load order matters:
+    1. config      → defines API_BASE_URL
+    2. constants   → defines CONSTANTS (one copy only — utils/constants.js)
+    3. helpers     → defines helpers + escapeHtml
+    4. toast       → defines window.toast (used by api.js)
+    5. api         → uses API_BASE_URL and window.toast
+    6. app         → page router (uses loadDashboard etc. via window.*)
+    7. page modules → register their window.load* functions
+-->
+<script src="config/config.js"></script>
+<script src="utils/constants.js"></script>
+<script src="utils/helpers.js"></script>
+<script src="assets/js/toast.js"></script>
+<script src="assets/js/api.js"></script>
+<script src="assets/js/app.js"></script>
+<script src="assets/js/dashboard.js"></script>
+<script src="assets/js/products.js"></script>
+<script src="assets/js/inventory.js"></script>
+<script src="assets/js/sales.js"></script>
 
 </body>
-</html>
+    </html>

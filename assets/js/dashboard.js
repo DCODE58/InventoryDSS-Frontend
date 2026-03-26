@@ -52,7 +52,7 @@ async function updateEOQOnly() {
         const container = document.getElementById('eoq-list');
 
         if (!summary || summary.length === 0) {
-            container.innerHTML = '<div style="text-align:center;padding:20px;">📊 No EOQ data available</div>';
+            container.innerHTML = '<div style="text-align:center;padding:20px;">No EOQ data available</div>';
             return;
         }
 

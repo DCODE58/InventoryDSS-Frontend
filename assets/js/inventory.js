@@ -16,7 +16,7 @@ async function loadInventory(silent = false) {
 function renderInventoryTable(data) {
     const tbody = document.getElementById('inventory-list');
     if (!data.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">📭 No inventory data found. Add products first.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;"> No inventory data found. Add products first.</td></tr>';
         return;
     }
     tbody.innerHTML = data.map(item => {

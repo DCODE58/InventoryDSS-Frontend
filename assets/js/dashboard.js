@@ -22,7 +22,7 @@ async function updateROPOnly(ropAlerts, silent = false) {
     const container = document.getElementById('rop-alerts-list');
 
     if (!ropAlerts || ropAlerts.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:20px;">✅ No alerts — stock levels are healthy</div>';
+        container.innerHTML = '<div style="text-align:center;padding:20px;">No alerts — stock levels are healthy</div>';
         return;
     }
 

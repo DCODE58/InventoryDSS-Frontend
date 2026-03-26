@@ -83,7 +83,7 @@ async function updateForecast() {
         if (!canvas) return;
 
         if (!forecast.labels || !forecast.values || forecast.labels.length === 0) {
-            canvas.parentElement.innerHTML = '<p style="text-align:center;padding:20px;">📊 No sales data yet — forecast will appear after sales are recorded</p>';
+            canvas.parentElement.innerHTML = '<p style="text-align:center;padding:20px;">No sales data yet — forecast will appear after sales are recorded</p>';
             return;
         }
 

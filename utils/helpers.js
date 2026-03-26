@@ -15,7 +15,7 @@ const helpers = {
         return date.toLocaleDateString();
     },
     formatCurrency(amount) {
-        return `$${parseFloat(amount).toFixed(2)}`;
+        return `Ksh ${parseFloat(amount).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     },
     getStockStatus(stock, reorderPoint) {
         if (stock <= 0) return { text: 'Out of Stock', class: 'badge-danger' };

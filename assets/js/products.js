@@ -42,6 +42,7 @@ function openProductModal(productId = null) {
     const nameField = document.getElementById('product-name');
     const costField = document.getElementById('product-cost');
     const priceField = document.getElementById('product-price');
+    const stockField = document.getElementById('product-stock');
     if (productId) {
         const product = currentProducts.find(p => p.product_id == productId);
         if (!product) return;
@@ -50,12 +51,14 @@ function openProductModal(productId = null) {
         nameField.value = product.name;
         costField.value = product.cost;
         priceField.value = product.price;
+        stockField.value = product.stock ?? 0;
     } else {
         title.textContent = 'Add Product';
         idField.value = '';
         nameField.value = '';
         costField.value = '';
         priceField.value = '';
+        stockField.value = 0;
     }
     modal.classList.remove('hidden');
 }
@@ -63,18 +66,25 @@ function openProductModal(productId = null) {
 async function saveProduct(event) {
     event.preventDefault();
     const id = document.getElementById('product-id-edit').value;
+    const stock = parseInt(document.getElementById('product-stock').value, 10);
     const productData = {
         name: document.getElementById('product-name').value,
         cost: parseFloat(document.getElementById('product-cost').value),
         price: parseFloat(document.getElementById('product-price').value)
     };
     try {
+        let savedId = id;
         if (id) {
             await api.updateProduct(id, productData);
             toast.success('Product updated');
         } else {
-            await api.addProduct(productData);
+            const result = await api.addProduct(productData);
+            savedId = result.product_id ?? result.id ?? id;
             toast.success('Product added');
+        }
+        // Set initial stock via the inventory endpoint
+        if (savedId && !isNaN(stock)) {
+            await api.updateStock(savedId, stock);
         }
         closeModal('product-modal');
         await loadProducts(true);

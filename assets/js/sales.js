@@ -43,7 +43,7 @@ async function loadRecentSales() {
         const sales = await api.getRecentSales(30);
         const tbody = document.getElementById('recent-sales-list');
         if (!sales.length) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">📭 No sales recorded yet</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;"> No sales recorded yet</td></tr>';
             return;
         }
         tbody.innerHTML = sales.map(sale => `

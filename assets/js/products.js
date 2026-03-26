@@ -16,7 +16,7 @@ async function loadProducts(silent = false) {
 function renderProductsTable(products) {
     const tbody = document.getElementById('products-list');
     if (!products.length) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">📭 No products yet. Click "Add Product" to start.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;"> No products yet. Click "Add Product" to start.</td></tr>';
         return;
     }
     tbody.innerHTML = products.map(p => `

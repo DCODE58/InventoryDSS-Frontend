@@ -1,27 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>IO-DSS | Smart Inventory Optimization</title>
 
-    <!-- Styles -->
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/layout.css">
     <link rel="stylesheet" href="assets/css/components.css">
-
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 <div class="app">
 
-    <!-- Sidebar (no logo) -->
+    <!-- ── Sidebar overlay (tap outside to close on mobile) ── -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- ── Sidebar ──────────────────────────────────────────── -->
     <aside class="sidebar">
+        <span class="sidebar-app-name">IO-DSS</span>
         <ul>
             <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="#" data-page="products"><i class="fas fa-cube"></i> Products</a></li>
@@ -30,29 +29,35 @@
         </ul>
     </aside>
 
-    <!-- Main Content -->
+    <!-- ── Main content ──────────────────────────────────────── -->
     <main class="main-content">
 
         <!-- Navbar -->
         <nav class="navbar">
-            <!-- Hamburger / X — visible on mobile -->
-            <div class="menu-toggle" id="menuToggle">
+            <div class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
                 <i class="fas fa-bars"></i>
             </div>
+
             <div class="logo">IO-DSS</div>
-            <div class="user-info">
-                <i class="fas fa-user-circle"></i>
-                <span>Admin</span>
+
+            <div class="navbar-right">
+                <button class="theme-toggle" id="themeToggle"
+                        title="Switch to light mode" aria-label="Toggle theme">
+                    <i class="fas fa-sun"></i>
+                </button>
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span>Admin</span>
+                </div>
             </div>
         </nav>
 
         <div class="page-container">
 
-            <!-- ================= DASHBOARD ================= -->
-            <section id="dashboard" class="page active">
+            <!-- ═══════════ DASHBOARD ═══════════ -->
+            <section id="dashboard" class="page">
                 <h1>Dashboard</h1>
 
-                <!-- Stats -->
                 <div class="stats-grid">
                     <div class="card">
                         <h3>Total Products</h3>
@@ -72,14 +77,12 @@
                     </div>
                 </div>
 
-                <!-- Alerts + EOQ -->
                 <div class="row">
                     <div class="card alerts-section">
                         <h2><i class="fas fa-exclamation-triangle"></i> ROP Alerts</h2>
                         <div id="rop-alerts-list"></div>
                         <div id="rop-error" class="error-text hidden">Failed to load alerts</div>
                     </div>
-
                     <div class="card eoq-section">
                         <h2><i class="fas fa-boxes"></i> EOQ Recommendations</h2>
                         <div id="eoq-list"></div>
@@ -87,7 +90,6 @@
                     </div>
                 </div>
 
-                <!-- Forecast -->
                 <div class="card forecast-section">
                     <h2><i class="fas fa-chart-line"></i> Demand Forecast (Next 30 Days)</h2>
                     <div class="chart-wrapper">
@@ -95,18 +97,17 @@
                     </div>
                 </div>
 
-                <!-- Telegram -->
                 <div class="card telegram-preview">
                     <h2><i class="fab fa-telegram"></i> Telegram Alerts</h2>
                     <div id="telegram-preview"></div>
                 </div>
             </section>
 
-            <!-- ================= PRODUCTS ================= -->
+            <!-- ═══════════ PRODUCTS ═══════════ -->
             <section id="products" class="page hidden">
                 <h1>Product Management</h1>
 
-                <button class="btn btn-primary" id="add-product-btn">
+                <button class="btn btn-primary" id="add-product-btn" style="margin-bottom:1.25rem;">
                     <i class="fas fa-plus"></i> Add Product
                 </button>
 
@@ -122,13 +123,13 @@
                             </tr>
                         </thead>
                         <tbody id="products-list">
-                            <tr><td colspan="5">Loading...</td></tr>
+                            <tr><td colspan="5">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- ================= INVENTORY ================= -->
+            <!-- ═══════════ INVENTORY ═══════════ -->
             <section id="inventory" class="page hidden">
                 <h1>Inventory Levels</h1>
 
@@ -136,23 +137,23 @@
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Product ID</th>
-                                <th>Product Name</th>
+                                <th>ID</th>
+                                <th>Product</th>
                                 <th>Stock</th>
-                                <th>Reorder Point</th>
+                                <th>Reorder Pt.</th>
                                 <th>Safety Stock</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-list">
-                            <tr><td colspan="7">Loading...</td></tr>
+                            <tr><td colspan="7">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
-            <!-- ================= SALES ================= -->
+            <!-- ═══════════ SALES ═══════════ -->
             <section id="sales" class="page hidden">
                 <h1>Record Sale</h1>
 
@@ -164,17 +165,15 @@
                                 <option value="">Select Product</option>
                             </select>
                         </div>
-
                         <div class="form-group">
                             <label for="quantity">Quantity</label>
                             <input type="number" id="quantity" min="1" required>
                         </div>
-
                         <button type="submit" class="btn btn-primary">Record Sale</button>
                     </form>
                 </div>
 
-                <h2 style="margin-bottom:0.75rem;">Recent Sales</h2>
+                <h2>Recent Sales</h2>
 
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -193,11 +192,11 @@
                 </div>
             </section>
 
-        </div>
+        </div><!-- /page-container -->
     </main>
-</div>
+</div><!-- /app -->
 
-<!-- ================= MODALS ================= -->
+<!-- ═══════════ MODALS ═══════════ -->
 
 <div id="product-modal" class="modal hidden">
     <div class="modal-content">
@@ -241,16 +240,7 @@
     </div>
 </div>
 
-<!--
-    Script load order:
-    1. config      → defines API_BASE_URL
-    2. constants   → defines CONSTANTS
-    3. helpers     → defines helpers + escapeHtml
-    4. toast       → defines window.toast
-    5. api         → uses API_BASE_URL and window.toast
-    6. app         → page router
-    7. page modules
--->
+<!-- Script load order: config → constants → helpers → toast → api → app → page modules -->
 <script src="config/config.js"></script>
 <script src="utils/constants.js"></script>
 <script src="utils/helpers.js"></script>

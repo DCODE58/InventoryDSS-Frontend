@@ -1,36 +1,93 @@
+/* ── Glassmorphism variables ─────────────────────────────────────────────── */
+:root {
+    --glass-bg:      rgba(255, 255, 255, 0.08);
+    --glass-bg-mid:  rgba(255, 255, 255, 0.14);
+    --glass-bg-high: rgba(255, 255, 255, 0.22);
+    --glass-border:  rgba(255, 255, 255, 0.18);
+    --glass-shadow:  0 8px 32px rgba(0, 0, 0, 0.22);
+    --blur:          blur(18px);
+    --blur-light:    blur(10px);
+    --sidebar-w:     250px;
+    --accent:        #3498db;
+    --accent-glow:   rgba(52, 152, 219, 0.4);
+}
+
+/* ── Body background – rich gradient so glass has something to blur ──────── */
+body {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    min-height: 100vh;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────────────────── */
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    width: 250px;
+    width: var(--sidebar-w);
     height: 100vh;
-    background: #2c3e50;
-    color: white;
-    padding-top: 1rem;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    background: rgba(20, 40, 60, 0.55);
+    backdrop-filter: var(--blur);
+    -webkit-backdrop-filter: var(--blur);
+    border-right: 1px solid var(--glass-border);
+    color: #ecf0f1;
+    padding-top: 1.2rem;
+    box-shadow: var(--glass-shadow);
     z-index: 1000;
     overflow-y: auto;
 }
-.sidebar .logo { text-align: center; padding: 1rem; border-bottom: 1px solid #3d566e; margin-bottom: 1rem; }
-.sidebar .logo img { width: 80px; height: auto; }
-.sidebar ul { list-style: none; padding: 0; margin: 0; }
-.sidebar li a {
-    display: block;
-    padding: 0.8rem 1.5rem;
-    color: #ecf0f1;
-    text-decoration: none;
-    transition: background 0.3s, border-left 0.2s;
-    border-left: 4px solid transparent;
-}
-.sidebar li a i { margin-right: 10px; width: 20px; text-align: center; }
-.sidebar li a:hover { background: #3d566e; border-left-color: #3498db; }
-.sidebar li.active a { background: #3d566e; border-left-color: #3498db; font-weight: 500; }
 
-.main-content { margin-left: 250px; min-height: 100vh; background: #f4f7fc; }
+/* No logo in sidebar */
+.sidebar .logo { display: none; }
+
+.sidebar ul { list-style: none; padding: 0; margin: 0.5rem 0; }
+
+.sidebar li a {
+    display: flex;
+    align-items: center;
+    padding: 0.85rem 1.5rem;
+    color: rgba(236, 240, 241, 0.8);
+    text-decoration: none;
+    transition: background 0.25s, border-left 0.2s, color 0.2s;
+    border-left: 4px solid transparent;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+}
+.sidebar li a i {
+    margin-right: 10px;
+    width: 20px;
+    text-align: center;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+}
+.sidebar li a:hover {
+    background: var(--glass-bg-mid);
+    border-left-color: var(--accent);
+    color: #fff;
+}
+.sidebar li a:hover i { opacity: 1; }
+.sidebar li.active a {
+    background: var(--glass-bg-high);
+    border-left-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+.sidebar li.active a i { opacity: 1; }
+
+/* ── Main content ────────────────────────────────────────────────────────── */
+.main-content {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    background: transparent;
+}
+
+/* ── Navbar ─────────────────────────────────────────────────────────────── */
 .navbar {
-    background: white;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    padding: 0.8rem 2rem;
+    background: rgba(15, 32, 39, 0.55);
+    backdrop-filter: var(--blur-light);
+    -webkit-backdrop-filter: var(--blur-light);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    padding: 0.85rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -38,19 +95,55 @@
     top: 0;
     z-index: 999;
 }
-.navbar .logo { font-size: 1.5rem; font-weight: bold; color: #2c3e50; }
-.navbar .user-info { display: flex; align-items: center; gap: 10px; color: #2c3e50; }
-.navbar .user-info i { font-size: 1.5rem; }
-.menu-toggle { display: none; cursor: pointer; font-size: 1.5rem; }
 
+.navbar .logo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.navbar .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(236, 240, 241, 0.9);
+    font-size: 0.95rem;
+}
+.navbar .user-info i { font-size: 1.5rem; color: var(--accent); }
+
+/* ── Menu toggle (hamburger ↔ X) ─────────────────────────────────────────── */
+.menu-toggle {
+    display: none;
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #fff;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+.menu-toggle:hover { background: var(--glass-bg-mid); }
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-    .menu-toggle { display: block; }
+    .menu-toggle {
+        display: flex;     /* visible on mobile */
+    }
+
     .sidebar {
         position: fixed;
-        left: -250px;
+        left: calc(-1 * var(--sidebar-w));
         transition: left 0.3s ease;
         z-index: 1001;
     }
     .sidebar.open { left: 0; }
+
     .main-content { margin-left: 0; }
+
+    .navbar { padding: 0.75rem 1rem; }
+    .navbar .logo { font-size: 1.2rem; }
 }

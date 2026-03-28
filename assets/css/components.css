@@ -1,68 +1,44 @@
 .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.55);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.52);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
     z-index: 2000;
 }
-
 .modal .modal-content {
-    background: rgba(20, 40, 60, 0.7);
-    backdrop-filter: blur(28px);
-    -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--modal-bg);
+    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+    border: 1px solid var(--modal-border);
     border-radius: 18px;
-    width: 90%;
-    max-width: 500px;
+    width: 92%; max-width: 500px;
     padding: 1.75rem;
     position: relative;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.12);
     animation: slideDown 0.22s ease;
-    color: rgba(255,255,255,0.9);
+    color: var(--modal-color);
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
 }
-
 @keyframes slideDown {
-    from { transform: translateY(-30px); opacity: 0; }
+    from { transform: translateY(-28px); opacity: 0; }
     to   { transform: translateY(0);     opacity: 1; }
 }
-
-.modal .modal-content h2 {
-    color: #fff;
-    margin-bottom: 1.2rem;
-    font-size: 1.15rem;
-    font-weight: 700;
-}
+.modal .modal-content h2 { color: var(--modal-h2); margin-bottom: 1.2rem; font-size: 1.12rem; font-weight: 700; }
 
 .close-modal {
-    position: absolute;
-    top: 1rem;
-    right: 1.4rem;
-    font-size: 1.8rem;
-    cursor: pointer;
-    color: rgba(255,255,255,0.45);
-    line-height: 1;
+    position: absolute; top: 1rem; right: 1.4rem;
+    font-size: 1.8rem; cursor: pointer;
+    color: var(--text-muted); line-height: 1;
     transition: color 0.2s;
 }
-.close-modal:hover { color: #fff; }
+.close-modal:hover { color: var(--text-primary); }
 
-/* Alert / EOQ lists (dashboard cards) */
+/* Alert / EOQ lists */
 .alerts-section ul, .eoq-section ul { list-style: none; padding: 0; }
-
-.alerts-section li,
-.eoq-section li {
-    padding: 0.75rem 0;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.alerts-section li, .eoq-section li {
+    padding: 0.72rem 0;
+    border-bottom: 1px solid var(--list-border);
+    display: flex; justify-content: space-between; align-items: center;
+    color: var(--list-text);
+    transition: color 0.3s, border-color 0.3s;
 }
-
-.alerts-section li:last-child,
-.eoq-section li:last-child { border-bottom: none; }
+.alerts-section li:last-child, .eoq-section li:last-child { border-bottom: none; }

@@ -94,13 +94,13 @@ function applyTheme(theme) {
 // ── DOMContentLoaded ─────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Restore saved theme
-    const savedTheme = localStorage.getItem('io-dss-theme') || 'dark';
+    // Restore saved theme — default is now 'light'
+    const savedTheme = localStorage.getItem('io-dss-theme') || 'light';
     applyTheme(savedTheme);
 
     // Theme toggle button
     document.getElementById('themeToggle')?.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
         applyTheme(current === 'dark' ? 'light' : 'dark');
     });
 

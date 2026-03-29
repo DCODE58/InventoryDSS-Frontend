@@ -289,6 +289,7 @@ h2 {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    pointer-events: none;   /* let clicks fall through the gap between toasts */
 }
 
 .toast {
@@ -297,16 +298,25 @@ h2 {
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    padding: 12px 18px;
-    min-width: 260px;
-    box-shadow: 0 8px 24px rgba(40,100,180,0.14);
+    /* extra bottom padding makes room for the progress bar */
+    padding: 12px 18px 18px;
+    min-width: 280px;
+    max-width: 380px;
+    box-shadow: 0 8px 28px rgba(40,100,180,0.16);
     display: flex;
     align-items: center;
     gap: 12px;
-    animation: slideIn 0.3s ease;
+    animation: toastIn 0.3s cubic-bezier(0.34,1.46,0.64,1) forwards;
     border-left: 4px solid;
     color: var(--toast-color);
-    transition: background 0.3s, color 0.3s;
+    transition: background 0.3s, color 0.3s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+    pointer-events: all;    /* re-enable for the toast itself */
+}
+
+.toast:hover {
+    box-shadow: 0 12px 36px rgba(40,100,180,0.22);
 }
 
 .toast-success { border-left-color: #27ae60; }
@@ -314,18 +324,63 @@ h2 {
 .toast-info    { border-left-color: #3498db; }
 .toast-warning { border-left-color: #e67e22; }
 
-.toast i { font-size: 1.2rem; }
-.toast .toast-message { flex: 1; font-size: 0.9rem; }
-.toast .toast-close { cursor: pointer; color: var(--toast-close); font-size: 1.1rem; transition: color 0.2s; }
-.toast .toast-close:hover { color: var(--text-primary); }
+.toast-type-icon { font-size: 1.15rem; flex-shrink: 0; }
+.toast-success .toast-type-icon { color: #27ae60; }
+.toast-error   .toast-type-icon { color: #e74c3c; }
+.toast-info    .toast-type-icon { color: #3498db; }
+.toast-warning .toast-type-icon { color: #e67e22; }
 
-@keyframes slideIn {
-    from { transform: translateX(110%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
+.toast .toast-message { flex: 1; font-size: 0.9rem; line-height: 1.4; }
+.toast .toast-close {
+    cursor: pointer;
+    color: var(--toast-close);
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: color 0.2s, transform 0.2s;
+    padding: 2px;
+    border-radius: 4px;
 }
-@keyframes fadeOut {
-    to { opacity: 0; transform: translateX(110%); }
+.toast .toast-close:hover { color: var(--text-primary); transform: scale(1.2); }
+
+/* ── Progress bar ─────────────────────────────────────────────────────────── */
+.toast-progress {
+    position: absolute;
+    bottom: 0; left: 0;
+    width: 100%; height: 3px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
 }
+.toast-progress-bar {
+    height: 100%;
+    width: 100%;
+    transform-origin: left;
+    transform: scaleX(1);
+    border-radius: 0 0 12px 12px;
+}
+.toast-success .toast-progress-bar { background: #27ae60; }
+.toast-error   .toast-progress-bar { background: #e74c3c; }
+.toast-info    .toast-progress-bar { background: #3498db; }
+.toast-warning .toast-progress-bar { background: #e67e22; }
+
+/* ── Animations ───────────────────────────────────────────────────────────── */
+@keyframes toastIn {
+    from { transform: translateX(110%) scale(0.92); opacity: 0; }
+    to   { transform: translateX(0)    scale(1);    opacity: 1; }
+}
+@keyframes toastOut {
+    from { transform: translateX(0)    scale(1);    opacity: 1; }
+    to   { transform: translateX(110%) scale(0.92); opacity: 0; }
+}
+
+/* Bump animation when a duplicate toast is nudged */
+@keyframes toastBump {
+    0%   { transform: translateX(0); }
+    30%  { transform: translateX(-8px); }
+    60%  { transform: translateX(4px); }
+    100% { transform: translateX(0); }
+}
+.toast-bump { animation: toastBump 0.3s ease; }
 
 /* ── Chart wrapper ───────────────────────────────────────────────────────── */
 .chart-wrapper {

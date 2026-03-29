@@ -220,8 +220,6 @@ function renderTelegramFeed(ropAlerts) {
         </div>
         <div class="telegram-feed">
             ${history.map(h => {
-                const fullDate = formatTgTimeFull(h.ts);
-                const relTime  = formatTgTimeRelative(h.ts);
                 return `
                     <div class="tg-alert-item">
                         <span class="tg-icon"><i class="fab fa-telegram"></i></span>
@@ -229,7 +227,6 @@ function renderTelegramFeed(ropAlerts) {
                             <strong>${escapeHtml(h.product_name)}</strong> —
                             stock <strong>${h.stock}</strong>, ROP <strong>${h.reorder_point}</strong>
                         </span>
-                        <span class="tg-time" title="${escapeHtml(fullDate)}">${relTime}</span>
                     </div>`;
             }).join('')}
         </div>`;

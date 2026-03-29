@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -41,9 +41,10 @@
             <div class="logo">IO-DSS</div>
 
             <div class="navbar-right">
+                <!-- Light theme is default → show moon icon (to switch to dark) -->
                 <button class="theme-toggle" id="themeToggle"
-                        title="Switch to light mode" aria-label="Toggle theme">
-                    <i class="fas fa-sun"></i>
+                        title="Switch to dark mode" aria-label="Toggle theme">
+                    <i class="fas fa-moon"></i>
                 </button>
                 <div class="user-info">
                     <i class="fas fa-user-circle"></i>
@@ -91,14 +92,14 @@
                 </div>
 
                 <div class="card forecast-section">
-                    <h2><i class="fas fa-chart-line"></i> Demand Forecast (Next 30 Days)</h2>
+                    <h2><i class="fas fa-chart-bar"></i> Demand Forecast (Next 30 Days)</h2>
                     <div class="chart-wrapper">
                         <canvas id="forecast-chart"></canvas>
                     </div>
                 </div>
 
                 <div class="card telegram-preview">
-                    <h2><i class="fab fa-telegram"></i> Telegram Alerts</h2>
+                    <h2><i class="fab fa-telegram"></i> Telegram Alerts — Full History</h2>
                     <div id="telegram-preview"></div>
                 </div>
             </section>
@@ -253,4 +254,4 @@
 <script src="assets/js/sales.js"></script>
 
 </body>
-</html>
+    </html>

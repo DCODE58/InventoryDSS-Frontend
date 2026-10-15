@@ -1,44 +1,79 @@
-.modal {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.52);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    display: flex; align-items: center; justify-content: center;
-    z-index: 2000;
-}
-.modal .modal-content {
-    background: var(--modal-bg);
-    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-    border: 1px solid var(--modal-border);
-    border-radius: 18px;
-    width: 92%; max-width: 500px;
-    padding: 1.75rem;
-    position: relative;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.12);
-    animation: slideDown 0.22s ease;
-    color: var(--modal-color);
-    transition: background 0.3s, color 0.3s, border-color 0.3s;
-}
-@keyframes slideDown {
-    from { transform: translateY(-28px); opacity: 0; }
-    to   { transform: translateY(0);     opacity: 1; }
-}
-.modal .modal-content h2 { color: var(--modal-h2); margin-bottom: 1.2rem; font-size: 1.12rem; font-weight: 700; }
+/* ── Stat cards ────────────────────────────────────────── */
+.stats-grid .card{display:flex;flex-direction:column;gap:2px;}
+.stats-grid .card h3{display:flex;align-items:center;gap:7px;}
+.stat-value{font-size:26px;font-weight:700;font-family:'Archivo',sans-serif;margin:4px 0 0;}
+#total-products{color:var(--ink);}
+#low-stock{color:var(--warn);}
+#reorder-alerts{color:var(--danger);}
+#forecast-demand{color:var(--brand);}
 
-.close-modal {
-    position: absolute; top: 1rem; right: 1.4rem;
-    font-size: 1.8rem; cursor: pointer;
-    color: var(--text-muted); line-height: 1;
-    transition: color 0.2s;
+/* ── ROP alerts list ───────────────────────────────────── */
+.alerts-section ul,.eoq-section ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.alerts-section li{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:11px 13px;border-radius:8px;background:var(--surface-2);
+  border-left:3px solid var(--border);font-size:13px;
 }
-.close-modal:hover { color: var(--text-primary); }
+.alerts-section li:has(.badge-danger){border-left-color:var(--danger);}
+.alerts-section li:has(.badge-warning){border-left-color:var(--warn);}
+.eoq-section li{
+  display:flex;justify-content:space-between;align-items:center;gap:10px;
+  padding:11px 13px;border-radius:8px;background:var(--surface-2);font-size:13px;
+}
+.alerts-section li strong,.eoq-section li strong{font-weight:600;}
+.eoq-section li span{color:var(--brand);font-weight:600;font-size:12.5px;}
 
-/* Alert / EOQ lists */
-.alerts-section ul, .eoq-section ul { list-style: none; padding: 0; }
-.alerts-section li, .eoq-section li {
-    padding: 0.72rem 0;
-    border-bottom: 1px solid var(--list-border);
-    display: flex; justify-content: space-between; align-items: center;
-    color: var(--list-text);
-    transition: color 0.3s, border-color 0.3s;
+/* ── Forecast chart card ───────────────────────────────── */
+.forecast-section{grid-column:1/-1;}
+
+/* ── Telegram feed ─────────────────────────────────────── */
+.telegram-preview h2 i{color:#2AA9E0;}
+.tg-toolbar{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);
 }
-.alerts-section li:last-child, .eoq-section li:last-child { border-bottom: none; }
+.tg-count{font-size:12px;color:var(--muted);font-weight:500;}
+.tg-clear-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  font-size:11.5px;padding:5px 10px;border-radius:7px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;
+}
+.tg-clear-btn:hover{color:var(--danger);border-color:var(--danger);}
+.telegram-feed{display:flex;flex-direction:column;gap:8px;max-height:360px;overflow-y:auto;}
+.tg-alert-item{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+  background:var(--surface-2);border-radius:10px;font-size:13px;
+}
+.tg-icon{color:#2AA9E0;font-size:15px;margin-top:1px;flex-shrink:0;}
+.tg-body strong{font-weight:600;}
+.tg-empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;}
+
+/* ── Tables ────────────────────────────────────────────── */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;}
+.data-table th{
+  text-align:left;font-size:11.5px;font-weight:600;color:var(--muted);
+  padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface-2);
+  white-space:nowrap;
+}
+.data-table td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tr:last-child td{border-bottom:none;}
+.data-table tr:hover td{background:var(--surface-2);}
+.data-table td .btn{padding:6px 12px;font-size:12px;margin-right:6px;}
+
+/* ── Modals ────────────────────────────────────────────── */
+.modal{
+  position:fixed;inset:0;background:rgba(10,14,11,.5);z-index:100;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.modal-content{
+  background:var(--surface);border-radius:12px;padding:26px 28px;width:100%;max-width:420px;
+  box-shadow:0 20px 50px -20px rgba(0,0,0,.4);position:relative;
+}
+.modal-content h2{font-size:17px;margin-bottom:18px;}
+.close-modal{
+  position:absolute;top:16px;right:18px;font-size:20px;color:var(--muted);cursor:pointer;line-height:1;
+}
+.close-modal:hover{color:var(--ink);}
+
+/* ── Sales form card ───────────────────────────────────── */
+#sales-form{display:flex;flex-direction:column;}
+#sales .card{margin-bottom:24px;}

@@ -62,13 +62,91 @@ async function updateStatsOnly(ropAlerts) {
         const lowStock = inventory.filter(i => i.stock <= i.reorder_point).length;
         document.getElementById('low-stock').textContent = lowStock;
         document.getElementById('reorder-alerts').textContent = ropAlerts.length;
+
+        // Inventory value = Σ(stock × cost) across all products
+        const invValue = products.reduce((sum, p) => sum + (p.stock || 0) * (p.cost || 0), 0);
+        const invValueEl = document.getElementById('inventory-value');
+        if (invValueEl) invValueEl.textContent = helpers.formatCurrency(invValue);
     } catch (error) {
         console.error('Stats update failed:', error);
     }
 }
 
+/**
+ * Revenue (current 30d) vs the previous 30d, plus a top-5-by-revenue list.
+ * Pulls 60 days of sales in one request and splits it client-side into two
+ * windows, rather than two separate API calls.
+ * Revenue uses each product's CURRENT price (sales don't store a historical
+ * unit price), so this is an estimate wherever prices have since changed.
+ */
+async function updateRevenueAndTopProducts() {
+    const revenueEl = document.getElementById('revenue-30d');
+    const deltaEl = document.getElementById('revenue-delta');
+    const topListEl = document.getElementById('top-products-list');
+
+    try {
+        const [sales, products] = await Promise.all([
+            api.getRecentSales(60),
+            api.getProducts(),
+        ]);
+        const priceById = {};
+        products.forEach(p => { priceById[p.product_id] = p.price; });
+
+        const now = Date.now();
+        const DAY_MS = 86400000;
+        let current = 0, previous = 0;
+        const revenueByProduct = {};
+
+        sales.forEach(sale => {
+            const price = priceById[sale.product_id] ?? 0;
+            const revenue = sale.quantity * price;
+            const ageDays = (now - new Date(sale.date).getTime()) / DAY_MS;
+
+            if (ageDays <= 30) {
+                current += revenue;
+                revenueByProduct[sale.product_name] = (revenueByProduct[sale.product_name] || 0) + revenue;
+            } else if (ageDays <= 60) {
+                previous += revenue;
+            }
+        });
+
+        if (revenueEl) revenueEl.textContent = helpers.formatCurrency(current);
+
+        if (deltaEl) {
+            if (previous > 0) {
+                const pct = ((current - previous) / previous) * 100;
+                const up = pct >= 0;
+                deltaEl.textContent = `${up ? '▲' : '▼'} ${Math.abs(pct).toFixed(1)}% vs previous 30d`;
+                deltaEl.className = `stat-delta ${up ? 'up' : 'down'}`;
+            } else {
+                deltaEl.textContent = current > 0 ? 'No prior-period data to compare' : '';
+                deltaEl.className = 'stat-delta';
+            }
+        }
+
+        if (topListEl) {
+            const top5 = Object.entries(revenueByProduct)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            if (!top5.length) {
+                topListEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">No sales in the last 30 days</div>';
+            } else {
+                topListEl.innerHTML = '<ul>' + top5.map(([name, revenue]) => `
+                    <li>
+                        <strong>${escapeHtml(name)}</strong>
+                        <span>${helpers.formatCurrency(revenue)}</span>
+                    </li>`).join('') + '</ul>';
+            }
+        }
+    } catch (error) {
+        console.error('Revenue/top-products update failed:', error);
+        if (revenueEl) revenueEl.textContent = '—';
+    }
+}
+
 // ─── ROP alerts panel ────────────────────────────────────────────────────────
 async function updateROPOnly(ropAlerts, silent = false) {
+    document.getElementById('rop-error')?.classList.add('hidden');
     const container = document.getElementById('rop-alerts-list');
     if (!ropAlerts || ropAlerts.length === 0) {
         container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">✅ No alerts — stock levels are healthy</div>';
@@ -90,6 +168,7 @@ async function updateROPOnly(ropAlerts, silent = false) {
 // ─── EOQ panel ───────────────────────────────────────────────────────────────
 async function updateEOQOnly() {
     try {
+        document.getElementById('eoq-error')?.classList.add('hidden');
         const summary = await api.getEOQ();
         const container = document.getElementById('eoq-list');
         if (!summary || summary.length === 0) {
@@ -278,6 +357,7 @@ async function loadDashboard(silent = false) {
             updateROPOnly(ropAlerts, silent),
             updateEOQOnly(),
             updateForecast(),
+            updateRevenueAndTopProducts(),
         ]);
         renderTelegramFeed(ropAlerts);
     } catch (error) {

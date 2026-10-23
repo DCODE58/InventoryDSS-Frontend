@@ -76,6 +76,15 @@
                         <h3><i class="fas fa-chart-line"></i> Forecasted Demand (30d)</h3>
                         <p class="stat-value" id="forecast-demand">—</p>
                     </div>
+                    <div class="card">
+                        <h3><i class="fas fa-coins"></i> Inventory Value</h3>
+                        <p class="stat-value" id="inventory-value">—</p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-sack-dollar"></i> Revenue (30d)</h3>
+                        <p class="stat-value" id="revenue-30d">—</p>
+                        <p class="stat-delta" id="revenue-delta"></p>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -98,6 +107,11 @@
                     </div>
                 </div>
 
+                <div class="card eoq-section">
+                    <h2><i class="fas fa-ranking-star"></i> Top Products — Revenue (30d)</h2>
+                    <div id="top-products-list"></div>
+                </div>
+
                 <div class="card telegram-preview">
                     <h2><i class="fab fa-telegram"></i> Telegram Alerts — Full History</h2>
                     <div id="telegram-preview"></div>
@@ -108,9 +122,12 @@
             <section id="products" class="page hidden">
                 <h1>Product Management</h1>
 
-                <button class="btn btn-primary" id="add-product-btn" style="margin-bottom:1.25rem;">
-                    <i class="fas fa-plus"></i> Add Product
-                </button>
+                <div class="page-toolbar">
+                    <button class="btn btn-primary" id="add-product-btn">
+                        <i class="fas fa-plus"></i> Add Product
+                    </button>
+                    <input type="search" id="products-search" class="table-search" placeholder="Search products…">
+                </div>
 
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -120,11 +137,12 @@
                                 <th>Name</th>
                                 <th>Cost</th>
                                 <th>Price</th>
+                                <th>Margin</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="products-list">
-                            <tr><td colspan="5">Loading…</td></tr>
+                            <tr><td colspan="6">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -133,6 +151,10 @@
             <!-- ═══════════ INVENTORY ═══════════ -->
             <section id="inventory" class="page hidden">
                 <h1>Inventory Levels</h1>
+
+                <div class="page-toolbar">
+                    <input type="search" id="inventory-search" class="table-search" placeholder="Search inventory…">
+                </div>
 
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -143,12 +165,13 @@
                                 <th>Stock</th>
                                 <th>Reorder Pt.</th>
                                 <th>Safety Stock</th>
+                                <th>Days Left</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-list">
-                            <tr><td colspan="7">Loading…</td></tr>
+                            <tr><td colspan="8">Loading…</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -174,7 +197,15 @@
                     </form>
                 </div>
 
-                <h2>Recent Sales</h2>
+                <div class="page-toolbar">
+                    <h2 style="margin:0;">Recent Sales</h2>
+                    <select id="sales-range" class="table-search" style="max-width:160px;">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                    </select>
+                </div>
+                <p class="sales-total" id="sales-total"></p>
 
                 <div class="table-wrapper">
                     <table class="data-table">
@@ -183,11 +214,12 @@
                                 <th>Sale ID</th>
                                 <th>Product</th>
                                 <th>Quantity</th>
+                                <th>Revenue</th>
                                 <th>Date</th>
                             </tr>
                         </thead>
                         <tbody id="recent-sales-list">
-                            <tr><td colspan="4">No sales recorded yet</td></tr>
+                            <tr><td colspan="5">No sales recorded yet</td></tr>
                         </tbody>
                     </table>
                 </div>

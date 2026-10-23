@@ -1,139 +1,183 @@
-let currentPage = null;
-let loadedPages  = {};
-let refreshInterval = null;
+let currentProducts = [];
+let productsSearchTerm = '';
 
-// ── Skeleton placeholders ────────────────────────────────────────────────────
-function showSkeleton(pageId) {
-    const skeletons = {
-        dashboard: ['rop-alerts-list','eoq-list'],
-        products:  ['products-list'],
-        inventory: ['inventory-list'],
-        sales:     ['product-id','recent-sales-list'],
-    };
-    (skeletons[pageId] || []).forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.innerHTML = id === 'product-id'
-            ? '<option>Loading products…</option>'
-            : '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
-    });
-}
-window.showSkeleton = showSkeleton;
-
-function loadPageData(pageId) {
-    showSkeleton(pageId);
-    switch (pageId) {
-        case 'dashboard': if (typeof loadDashboard === 'function') loadDashboard();    break;
-        case 'products':  if (typeof loadProducts  === 'function') loadProducts();     break;
-        case 'inventory': if (typeof loadInventory === 'function') loadInventory();    break;
-        case 'sales':     if (typeof loadSalesPage === 'function') loadSalesPage();    break;
-    }
-}
-function refreshPageData(pageId) {
-    switch (pageId) {
-        case 'dashboard': if (typeof loadDashboard === 'function') loadDashboard(true);  break;
-        case 'products':  if (typeof loadProducts  === 'function') loadProducts(true);   break;
-        case 'inventory': if (typeof loadInventory === 'function') loadInventory(true);  break;
-        case 'sales':     if (typeof loadSalesPage === 'function') loadSalesPage(true);  break;
+async function loadProducts(silent = false) {
+    if (!silent) showSkeleton('products');
+    try {
+        currentProducts = await api.getProducts();
+        renderProductsTable(filterProducts(currentProducts));
+        if (!silent) toast.success('Products loaded');
+    } catch (error) {
+        console.error('Error loading products:', error);
+        document.getElementById('products-list').innerHTML = '<tr><td colspan="6">Failed to load products</td></tr>';
+        if (!silent) toast.error('Failed to load products');
     }
 }
 
-function showPage(pageId) {
-    if (currentPage === pageId) return;
-    currentPage = pageId;
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.getElementById(pageId)?.classList.remove('hidden');
-    document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
-    document.querySelector(`.sidebar a[data-page="${pageId}"]`)?.parentElement.classList.add('active');
-    if (!loadedPages[pageId]) { loadPageData(pageId);    loadedPages[pageId] = true; }
-    else                      { refreshPageData(pageId); }
+function filterProducts(products) {
+    const term = productsSearchTerm.trim().toLowerCase();
+    if (!term) return products;
+    return products.filter(p => p.name.toLowerCase().includes(term));
 }
 
-// ── Auto-refresh dashboard ───────────────────────────────────────────────────
-function startAutoRefresh() {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-        const dash = document.getElementById('dashboard');
-        if (dash && !dash.classList.contains('hidden') && !document.hidden)
-            if (typeof loadDashboard === 'function') loadDashboard(true);
-    }, 10000);
+function renderProductsTable(products) {
+    const tbody = document.getElementById('products-list');
+    if (!products.length) {
+        const message = productsSearchTerm
+            ? 'No products match your search.'
+            : 'No products yet. Click "Add Product" to start.';
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">${message}</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = products.map(p => {
+        const margin = helpers.calculateMargin(p.cost, p.price);
+        const marginCell = margin
+            ? `<span class="badge ${helpers.getMarginBadgeClass(margin.percent)}">
+                 ${helpers.formatCurrency(margin.amount)} (${margin.percent.toFixed(1)}%)
+               </span>`
+            : '—';
+        return `
+        <tr>
+            <td>${p.product_id}</td>
+            <td>${escapeHtml(p.name)}</td>
+            <td>${helpers.formatCurrency(p.cost)}</td>
+            <td>${helpers.formatCurrency(p.price)}</td>
+            <td>${marginCell}</td>
+            <td>
+                <button class="btn btn-secondary edit-product" data-id="${p.product_id}">Edit</button>
+                <button class="btn btn-danger delete-product" data-id="${p.product_id}">Delete</button>
+            </td>
+        </tr>
+    `;
+    }).join('');
+    document.querySelectorAll('.edit-product').forEach(btn => btn.addEventListener('click', () => openProductModal(btn.dataset.id)));
+    document.querySelectorAll('.delete-product').forEach(btn => btn.addEventListener('click', () => deleteProduct(btn.dataset.id)));
 }
-function stopAutoRefresh() { clearInterval(refreshInterval); refreshInterval = null; }
-document.addEventListener('visibilitychange', () =>
-    document.hidden ? stopAutoRefresh() : startAutoRefresh()
-);
 
-// ── Sidebar open/close helper ────────────────────────────────────────────────
-function setSidebarOpen(sidebar, menuToggle, overlay, open) {
-    if (open) {
-        sidebar.classList.add('open');
-        overlay.classList.add('active');
-        menuToggle.innerHTML = '<i class="fas fa-times"></i>';
+function openProductModal(productId = null) {
+    const modal = document.getElementById('product-modal');
+    const title = document.getElementById('modal-title');
+    const idField = document.getElementById('product-id-edit');
+    const nameField = document.getElementById('product-name');
+    const costField = document.getElementById('product-cost');
+    const priceField = document.getElementById('product-price');
+    const stockField = document.getElementById('product-stock');
+    if (productId) {
+        const product = currentProducts.find(p => p.product_id == productId);
+        if (!product) return;
+        title.textContent = 'Edit Product';
+        idField.value = product.product_id;
+        nameField.value = product.name;
+        costField.value = product.cost;
+        priceField.value = product.price;
+        stockField.value = product.stock ?? 0;
     } else {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('active');
-        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        title.textContent = 'Add Product';
+        idField.value = '';
+        nameField.value = '';
+        costField.value = '';
+        priceField.value = '';
+        stockField.value = 0;
+    }
+    modal.classList.remove('hidden');
+}
+
+/**
+ * Validates the product form before it ever reaches the API. Returns a
+ * parsed, trimmed payload on success or null (after showing a toast) on
+ * failure — mirrors the checks the backend also enforces, so a bad value
+ * gets a specific, immediate message instead of a generic server error.
+ */
+function validateProductForm() {
+    const name = document.getElementById('product-name').value.trim();
+    const cost = parseFloat(document.getElementById('product-cost').value);
+    const price = parseFloat(document.getElementById('product-price').value);
+    const stock = parseInt(document.getElementById('product-stock').value, 10);
+
+    if (!name) {
+        toast.warning('Product name is required');
+        return null;
+    }
+    if (name.length > 100) {
+        toast.warning('Product name must be under 100 characters');
+        return null;
+    }
+    if (isNaN(cost) || cost < 0) {
+        toast.warning('Enter a valid, non-negative cost');
+        return null;
+    }
+    if (isNaN(price) || price < 0) {
+        toast.warning('Enter a valid, non-negative price');
+        return null;
+    }
+    if (isNaN(stock) || stock < 0) {
+        toast.warning('Enter a valid, non-negative stock quantity');
+        return null;
+    }
+    return { name, cost, price, stock };
+}
+
+async function saveProduct(event) {
+    event.preventDefault();
+    const id = document.getElementById('product-id-edit').value;
+
+    const validated = validateProductForm();
+    if (!validated) return;
+    const { name, cost, price, stock } = validated;
+    const productData = { name, cost, price };
+
+    try {
+        let savedId = id;
+        if (id) {
+            await api.updateProduct(id, productData);
+            toast.success('Product updated');
+        } else {
+            const result = await api.addProduct(productData);
+            savedId = result.product_id ?? result.id ?? id;
+            toast.success('Product added');
+        }
+        // Set initial stock via the inventory endpoint
+        if (savedId) {
+            await api.updateStock(savedId, stock);
+        }
+        closeModal('product-modal');
+        await loadProducts(true);
+    } catch (error) {
+        toast.error('Failed to save product');
     }
 }
 
-// ── Theme toggle ─────────────────────────────────────────────────────────────
-function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('io-dss-theme', theme);
-    const btn = document.getElementById('themeToggle');
-    if (!btn) return;
-    if (theme === 'light') {
-        btn.innerHTML = '<i class="fas fa-moon"></i>';
-        btn.title = 'Switch to dark mode';
-    } else {
-        btn.innerHTML = '<i class="fas fa-sun"></i>';
-        btn.title = 'Switch to light mode';
+async function deleteProduct(id) {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    try {
+        await api.deleteProduct(id);
+        toast.success('Product deleted');
+        await loadProducts(true);
+    } catch (error) {
+        toast.error('Delete failed');
     }
 }
 
-// ── DOMContentLoaded ─────────────────────────────────────────────────────────
+function closeModal(modalId) {
+    document.getElementById(modalId).classList.add('hidden');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('add-product-btn').addEventListener('click', () => openProductModal());
+    document.getElementById('product-form').addEventListener('submit', saveProduct);
+    document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', (e) => {
+        const modal = btn.closest('.modal');
+        if (modal) modal.classList.add('hidden');
+    }));
+    window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.classList.add('hidden'); });
 
-    // Restore saved theme — default is now 'light'
-    const savedTheme = localStorage.getItem('io-dss-theme') || 'light';
-    applyTheme(savedTheme);
-
-    // Theme toggle button
-    document.getElementById('themeToggle')?.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme') || 'light';
-        applyTheme(current === 'dark' ? 'light' : 'dark');
-    });
-
-    // Page nav links
-    document.querySelectorAll('[data-page]').forEach(link => {
-        link.addEventListener('click', e => {
-            e.preventDefault();
-            const page = link.getAttribute('data-page');
-            if (page) {
-                showPage(page);
-                // Close sidebar on mobile after navigation
-                const sidebar    = document.querySelector('.sidebar');
-                const menuToggle = document.getElementById('menuToggle');
-                const overlay    = document.getElementById('sidebarOverlay');
-                if (sidebar?.classList.contains('open'))
-                    setSidebarOpen(sidebar, menuToggle, overlay, false);
-            }
+    const searchInput = document.getElementById('products-search');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            productsSearchTerm = e.target.value;
+            renderProductsTable(filterProducts(currentProducts));
         });
-    });
-
-    // Hamburger / X toggle
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar    = document.querySelector('.sidebar');
-    const overlay    = document.getElementById('sidebarOverlay');
-
-    if (menuToggle && sidebar && overlay) {
-        menuToggle.addEventListener('click', e => {
-            e.stopPropagation();
-            setSidebarOpen(sidebar, menuToggle, overlay, !sidebar.classList.contains('open'));
-        });
-        overlay.addEventListener('click', () => setSidebarOpen(sidebar, menuToggle, overlay, false));
     }
-
-    showPage('dashboard');
-    startAutoRefresh();
 });
+
+window.loadProducts = loadProducts;

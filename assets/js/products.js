@@ -33,7 +33,7 @@ function renderProductsTable(products) {
         const margin = helpers.calculateMargin(p.cost, p.price);
         const marginCell = margin
             ? `<span class="badge ${helpers.getMarginBadgeClass(margin.percent)}">
-                 ${margin.amount >= 0 ? '🔼' : '🔽'}
+                 <span class="margin-arrow" aria-hidden="true">${margin.amount >= 0 ? '▲' : '▼'}</span>
                  ${helpers.formatCurrency(margin.amount)} (${margin.percent.toFixed(1)}%)
                </span>`
             : '—';

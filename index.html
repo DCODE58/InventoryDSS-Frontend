@@ -193,17 +193,30 @@
                             <label for="quantity">Quantity</label>
                             <input type="number" id="quantity" min="1" required>
                         </div>
+                        <p class="sale-preview" id="sale-preview"></p>
                         <button type="submit" class="btn btn-primary">Record Sale</button>
                     </form>
                 </div>
 
                 <div class="page-toolbar">
                     <h2 style="margin:0;">Recent Sales</h2>
-                    <select id="sales-range" class="table-search" style="max-width:160px;">
-                        <option value="7">Last 7 days</option>
-                        <option value="30" selected>Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                    </select>
+                    <div class="sales-filters">
+                        <select id="sales-product-filter" class="table-search" style="max-width:180px;">
+                            <option value="">All products</option>
+                        </select>
+                        <select id="sales-range" class="table-search" style="max-width:150px;">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                        <select id="sales-sort" class="table-search" style="max-width:140px;">
+                            <option value="newest">Newest first</option>
+                            <option value="oldest">Oldest first</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" id="sales-export-btn">
+                            <i class="fas fa-download"></i> Export CSV
+                        </button>
+                    </div>
                 </div>
                 <p class="sales-total" id="sales-total"></p>
 
@@ -223,6 +236,7 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="pagination" id="sales-pagination"></div>
             </section>
 
         </div><!-- /page-container -->

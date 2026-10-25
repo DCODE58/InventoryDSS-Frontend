@@ -49,6 +49,9 @@
 .tg-body strong{font-weight:600;}
 .tg-empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:13px;}
 
+/* ── Margin badge arrow (profit ▲ / loss ▼) ───────────────── */
+.margin-arrow{font-size:10px;margin-right:2px;}
+
 /* ── Stat card delta ───────────────────────────────────── */
 .stat-delta{font-size:11.5px;font-weight:600;margin:4px 0 0;}
 .stat-delta.up{color:var(--ok);}

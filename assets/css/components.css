@@ -11,6 +11,7 @@
 .alerts-section ul,.eoq-section ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;}
 .alerts-section li{
   display:flex;justify-content:space-between;align-items:center;gap:10px;
+  flex-wrap:wrap;
   padding:11px 13px;border-radius:8px;background:var(--surface-2);
   border-left:3px solid var(--border);font-size:13px;
 }
@@ -18,6 +19,7 @@
 .alerts-section li:has(.badge-warning){border-left-color:var(--warn);}
 .eoq-section li{
   display:flex;justify-content:space-between;align-items:center;gap:10px;
+  flex-wrap:wrap;
   padding:11px 13px;border-radius:8px;background:var(--surface-2);font-size:13px;
 }
 .alerts-section li strong,.eoq-section li strong{font-weight:600;}
@@ -29,7 +31,7 @@
 /* ── Telegram feed ─────────────────────────────────────── */
 .telegram-preview h2 i{color:#2AA9E0;}
 .tg-toolbar{
-  display:flex;justify-content:space-between;align-items:center;
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
   margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);
 }
 .tg-count{font-size:12px;color:var(--muted);font-weight:500;}

@@ -1,8 +1,13 @@
 let forecastChart = null;
 
 // ─── Telegram alert history (persisted in localStorage) ───────────────────
-const TG_HISTORY_KEY = 'io_dss_tg_history';
-const TG_MAX_ITEMS   = 200;
+const TG_HISTORY_KEY  = 'io_dss_tg_history';
+const TG_CLEARED_KEY  = 'io_dss_tg_cleared_snapshot';
+const TG_MAX_ITEMS    = 200;
+
+// The most recent ROP alerts the dashboard has seen, kept in memory so
+// "Clear history" can snapshot exactly which breaches were dismissed.
+let lastKnownRopAlerts = [];
 
 function getTgHistory() {
     try { return JSON.parse(localStorage.getItem(TG_HISTORY_KEY) || '[]'); }
@@ -11,6 +16,12 @@ function getTgHistory() {
 function saveTgHistory(history) {
     try { localStorage.setItem(TG_HISTORY_KEY, JSON.stringify(history.slice(0, TG_MAX_ITEMS))); }
     catch (_) {}
+}
+
+/** { product_name: stock } for every breach that was active at the moment of the last "Clear history" click. */
+function getClearedSnapshot() {
+    try { return JSON.parse(localStorage.getItem(TG_CLEARED_KEY) || '{}'); }
+    catch (_) { return {}; }
 }
 
 /**
@@ -22,13 +33,22 @@ function saveTgHistory(history) {
  *  - The same alert won't stack up on every 10-second auto-refresh.
  *  - If stock changes (restocked then drops again), a new entry IS recorded
  *    with the correct new timestamp.
+ *
+ * Cleared-breach rule: if the user cleared history while this exact
+ * (product, stock) breach was active, it's skipped entirely — it would
+ * otherwise reappear on the very next refresh, since the underlying low-stock
+ * condition hasn't changed. It only comes back once the stock actually moves.
  */
 function mergeTgAlerts(ropAlerts) {
     const history = getTgHistory();
-    const now     = new Date();
+    const clearedSnapshot = getClearedSnapshot();
+    const now = new Date();
     const DEDUP_MS = 30 * 60 * 1000; // 30 minutes
+    let addedAny = false;
 
     ropAlerts.forEach(alert => {
+        if (clearedSnapshot[alert.product_name] === alert.stock) return;
+
         const recent = history.find(h =>
             h.product_name === alert.product_name &&
             h.stock        === alert.stock &&
@@ -43,8 +63,15 @@ function mergeTgAlerts(ropAlerts) {
                 severity:      alert.severity || 'low',
                 ts:            now.toISOString(),
             });
+            addedAny = true;
         }
     });
+
+    // A genuinely new breach came in — the cleared snapshot is stale now,
+    // so drop it rather than let it keep suppressing unrelated future alerts.
+    if (addedAny) {
+        try { localStorage.removeItem(TG_CLEARED_KEY); } catch (_) {}
+    }
 
     const merged = history.slice(0, TG_MAX_ITEMS);
     saveTgHistory(merged);
@@ -200,7 +227,7 @@ async function updateForecast() {
         if (!canvas) return;
 
         if (!forecast.labels || !forecast.values || forecast.labels.length === 0) {
-            canvas.parentElement.innerHTML = '<p style="text-align:center;padding:2rem;color:var(--text-muted);">No sales data yet — forecast will appear after sales are recorded</p>';
+            canvas.parentElement.innerHTML = '<p style="text-align:center;padding:2rem;color:var(--muted);">No sales data yet — forecast will appear after sales are recorded</p>';
             return;
         }
 
@@ -209,11 +236,12 @@ async function updateForecast() {
         const ctx    = canvas.getContext('2d');
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
+        // Teal brand color, matching --brand in both themes — #39A684 (dark) / #1F6E5C (light)
         const gradFill = ctx.createLinearGradient(0, 0, 0, 300);
-        gradFill.addColorStop(0, isDark ? 'rgba(52,152,219,0.80)' : 'rgba(52,152,219,0.72)');
-        gradFill.addColorStop(1, isDark ? 'rgba(41,128,185,0.25)' : 'rgba(41,128,185,0.18)');
+        gradFill.addColorStop(0, isDark ? 'rgba(57,166,132,0.80)' : 'rgba(31,110,92,0.72)');
+        gradFill.addColorStop(1, isDark ? 'rgba(57,166,132,0.22)' : 'rgba(31,110,92,0.16)');
 
-        const gridColor  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(52,152,219,0.10)';
+        const gridColor  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(31,110,92,0.10)';
         const tickColor  = isDark ? 'rgba(255,255,255,0.55)' : '#6a8799';
         const labelColor = isDark ? 'rgba(255,255,255,0.70)' : '#4a6275';
 
@@ -225,11 +253,11 @@ async function updateForecast() {
                     label: 'Forecasted demand — next 30 days (units)',
                     data: forecast.values,
                     backgroundColor: gradFill,
-                    borderColor: isDark ? '#3498db' : 'rgba(52,152,219,0.85)',
+                    borderColor: isDark ? '#39A684' : 'rgba(31,110,92,0.85)',
                     borderWidth: 1.5,
                     borderRadius: 6,
                     borderSkipped: false,
-                    hoverBackgroundColor: isDark ? 'rgba(52,152,219,0.95)' : 'rgba(52,152,219,0.88)',
+                    hoverBackgroundColor: isDark ? 'rgba(57,166,132,0.95)' : 'rgba(31,110,92,0.88)',
                 }],
             },
             options: {
@@ -242,7 +270,7 @@ async function updateForecast() {
                         backgroundColor: isDark ? 'rgba(10,24,42,0.92)' : 'rgba(255,255,255,0.96)',
                         titleColor:  isDark ? '#fff' : '#1a2e42',
                         bodyColor:   isDark ? 'rgba(255,255,255,0.80)' : '#4a6275',
-                        borderColor: isDark ? 'rgba(52,152,219,0.40)' : 'rgba(52,152,219,0.28)',
+                        borderColor: isDark ? 'rgba(57,166,132,0.40)' : 'rgba(31,110,92,0.28)',
                         borderWidth: 1,
                         cornerRadius: 10,
                         padding: 12,
@@ -274,6 +302,7 @@ async function updateForecast() {
 
 // ─── Telegram alert feed ──────────────────────────────────────────────────────
 function renderTelegramFeed(ropAlerts) {
+    lastKnownRopAlerts = ropAlerts || [];
     const history = (ropAlerts && ropAlerts.length > 0)
         ? mergeTgAlerts(ropAlerts)
         : getTgHistory();
@@ -313,6 +342,13 @@ function renderTelegramFeed(ropAlerts) {
 
 function clearTgHistory() {
     if (!confirm('Clear all Telegram alert history?')) return;
+
+    // Remember exactly which breaches were active right now, so they don't
+    // immediately repopulate the (now-empty) history on the next refresh.
+    const snapshot = {};
+    lastKnownRopAlerts.forEach(a => { snapshot[a.product_name] = a.stock; });
+    try { localStorage.setItem(TG_CLEARED_KEY, JSON.stringify(snapshot)); } catch (_) {}
+
     localStorage.removeItem(TG_HISTORY_KEY);
     renderTelegramFeed([]);
     toast.info('Telegram alert history cleared');

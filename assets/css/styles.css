@@ -13,15 +13,22 @@
   color-scheme: light;
 }
 html[data-theme="dark"]{
-  --bg:#10140F; --surface:#171D18; --surface-2:#1C231D; --border:#262F27;
-  --ink:#E7EBE4; --muted:#94A098; --muted-2:#79857C;
-  --brand:#39A684; --brand-ink:#08140F; --brand-tint:#15271F;
-  --warn:#E0A451; --warn-tint:#2A2113;
-  --danger:#E1685A; --danger-tint:#2A1714;
-  --ok:#39A684; --ok-tint:#15271F;
-  --side:#0B100D; --side-ink:#AEB8B0; --side-active:#182420; --side-border:#1B241E;
-  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 24px -16px rgba(0,0,0,.5);
+  --bg:#0C100D; --surface:#151B16; --surface-2:#1A211C; --border:#283128;
+  --ink:#EAEEE6; --muted:#98A398; --muted-2:#76816E;
+  --brand:#45BC97; --brand-ink:#06120D; --brand-tint:#163026;
+  --warn:#E8AC5C; --warn-tint:#2E2515;
+  --danger:#E8766A; --danger-tint:#301A17;
+  --ok:#45BC97; --ok-tint:#163026;
+  --side:#070A08; --side-ink:#AEB9AE; --side-active:#172620; --side-border:#161F19;
+  --card-highlight: rgba(255,255,255,.03);
+  --shadow: 0 1px 0 rgba(255,255,255,.02) inset, 0 1px 2px rgba(0,0,0,.4), 0 14px 28px -18px rgba(0,0,0,.6);
   color-scheme: dark;
+}
+/* Subtle top highlight on cards in dark mode — reads as a lit panel edge rather than a flat inverted box */
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .table-wrapper,
+html[data-theme="dark"] .modal-content{
+  background-image: linear-gradient(180deg, var(--card-highlight), transparent 40px);
 }
 
 *,*::before,*::after{box-sizing:border-box;}

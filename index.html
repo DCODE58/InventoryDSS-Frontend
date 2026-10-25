@@ -26,6 +26,7 @@
             <li><a href="#" data-page="products"><i class="fas fa-cube"></i> Products</a></li>
             <li><a href="#" data-page="inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
             <li><a href="#" data-page="sales"><i class="fas fa-shopping-cart"></i> Sales</a></li>
+            <li><a href="#" data-page="analytics"><i class="fas fa-chart-pie"></i> Analytics</a></li>
         </ul>
     </aside>
 
@@ -239,6 +240,69 @@
                 <div class="pagination" id="sales-pagination"></div>
             </section>
 
+            <section id="analytics" class="page hidden">
+                <h1>Analytics</h1>
+
+                <div class="page-toolbar">
+                    <select id="analytics-range" class="table-search" style="max-width:160px;">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary" id="analytics-export-btn">
+                        <i class="fas fa-download"></i> Export Best Sellers CSV
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="card">
+                        <h3><i class="fas fa-sack-dollar"></i> Total Revenue</h3>
+                        <p class="stat-value" id="an-total-revenue">—</p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-cubes"></i> Units Sold</h3>
+                        <p class="stat-value" id="an-units-sold">—</p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-receipt"></i> Avg. Order Value</h3>
+                        <p class="stat-value" id="an-aov">—</p>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-coins"></i> Gross Profit (est.)</h3>
+                        <p class="stat-value" id="an-gross-profit">—</p>
+                    </div>
+                </div>
+
+                <div class="card forecast-section">
+                    <h2><i class="fas fa-chart-line"></i> Revenue Trend</h2>
+                    <div class="chart-wrapper">
+                        <canvas id="revenue-trend-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="card eoq-section">
+                        <h2><i class="fas fa-trophy"></i> Best Sellers (by revenue)</h2>
+                        <div id="best-sellers-list"></div>
+                    </div>
+                    <div class="card alerts-section">
+                        <h2><i class="fas fa-box-archive"></i> Dead Stock (no sales in range)</h2>
+                        <div id="dead-stock-list"></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="card eoq-section">
+                        <h2><i class="fas fa-arrow-trend-up"></i> Best Margins</h2>
+                        <div id="best-margin-list"></div>
+                    </div>
+                    <div class="card alerts-section">
+                        <h2><i class="fas fa-arrow-trend-down"></i> Worst Margins</h2>
+                        <div id="worst-margin-list"></div>
+                    </div>
+                </div>
+            </section>
+
         </div><!-- /page-container -->
     </main>
 </div><!-- /app -->
@@ -298,6 +362,7 @@
 <script src="assets/js/products.js"></script>
 <script src="assets/js/inventory.js"></script>
 <script src="assets/js/sales.js"></script>
+<script src="assets/js/analytics.js"></script>
 
 </body>
     </html>

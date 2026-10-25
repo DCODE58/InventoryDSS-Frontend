@@ -9,6 +9,7 @@ function showSkeleton(pageId) {
         products:  ['products-list'],
         inventory: ['inventory-list'],
         sales:     ['product-id','recent-sales-list'],
+        analytics: ['best-sellers-list','dead-stock-list','best-margin-list','worst-margin-list'],
     };
     (skeletons[pageId] || []).forEach(id => {
         const el = document.getElementById(id);
@@ -27,6 +28,7 @@ function loadPageData(pageId) {
         case 'products':  if (typeof loadProducts  === 'function') loadProducts();     break;
         case 'inventory': if (typeof loadInventory === 'function') loadInventory();    break;
         case 'sales':     if (typeof loadSalesPage === 'function') loadSalesPage();    break;
+        case 'analytics': if (typeof loadAnalytics === 'function') loadAnalytics();    break;
     }
 }
 function refreshPageData(pageId) {
@@ -35,6 +37,7 @@ function refreshPageData(pageId) {
         case 'products':  if (typeof loadProducts  === 'function') loadProducts(true);   break;
         case 'inventory': if (typeof loadInventory === 'function') loadInventory(true);  break;
         case 'sales':     if (typeof loadSalesPage === 'function') loadSalesPage(true);  break;
+        case 'analytics': if (typeof loadAnalytics === 'function') loadAnalytics(true);  break;
     }
 }
 

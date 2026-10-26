@@ -1,142 +1,147 @@
+/* app.js — navigation, drawer, theme and application lifecycle */
+const PAGE_TITLES = {
+    dashboard: 'Dashboard',
+    products:  'Products',
+    inventory: 'Inventory',
+    sales:     'Sales',
+    analytics: 'Analytics',
+};
+const REFRESH_INTERVAL_MS = 15000;
+
 let currentPage = null;
-let loadedPages  = {};
-let refreshInterval = null;
+const loadedPages = {};
+let refreshTimer = null;
 
-// ── Skeleton placeholders ────────────────────────────────────────────────────
-function showSkeleton(pageId) {
-    const skeletons = {
-        dashboard: ['rop-alerts-list','eoq-list'],
-        products:  ['products-list'],
-        inventory: ['inventory-list'],
-        sales:     ['product-id','recent-sales-list'],
-        analytics: ['best-sellers-list','dead-stock-list','best-margin-list','worst-margin-list'],
-    };
-    (skeletons[pageId] || []).forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.innerHTML = id === 'product-id'
-            ? '<option>Loading products…</option>'
-            : '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
-    });
-}
-window.showSkeleton = showSkeleton;
+// ── Page loading ─────────────────────────────────────────────────────────────
+const PAGE_LOADERS = {
+    dashboard: (silent) => typeof loadDashboard === 'function' && loadDashboard(silent),
+    products:  (silent) => typeof loadProducts  === 'function' && loadProducts(silent),
+    inventory: (silent) => typeof loadInventory === 'function' && loadInventory(silent),
+    sales:     (silent) => typeof loadSalesPage === 'function' && loadSalesPage(silent),
+    analytics: (silent) => typeof loadAnalytics === 'function' && loadAnalytics(silent),
+};
 
-function loadPageData(pageId) {
-    showSkeleton(pageId);
-    switch (pageId) {
-        case 'dashboard': if (typeof loadDashboard === 'function') loadDashboard();    break;
-        case 'products':  if (typeof loadProducts  === 'function') loadProducts();     break;
-        case 'inventory': if (typeof loadInventory === 'function') loadInventory();    break;
-        case 'sales':     if (typeof loadSalesPage === 'function') loadSalesPage();    break;
-        case 'analytics': if (typeof loadAnalytics === 'function') loadAnalytics();    break;
-    }
-}
-function refreshPageData(pageId) {
-    switch (pageId) {
-        case 'dashboard': if (typeof loadDashboard === 'function') loadDashboard(true);  break;
-        case 'products':  if (typeof loadProducts  === 'function') loadProducts(true);   break;
-        case 'inventory': if (typeof loadInventory === 'function') loadInventory(true);  break;
-        case 'sales':     if (typeof loadSalesPage === 'function') loadSalesPage(true);  break;
-        case 'analytics': if (typeof loadAnalytics === 'function') loadAnalytics(true);  break;
-    }
+function pageFromHash() {
+    const id = location.hash.replace(/^#/, '');
+    return PAGE_TITLES[id] ? id : 'dashboard';
 }
 
-function showPage(pageId) {
-    if (currentPage === pageId) return;
+function showPage(pageId, { moveFocus = true } = {}) {
+    if (!PAGE_TITLES[pageId] || currentPage === pageId) return;
     currentPage = pageId;
-    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-    document.getElementById(pageId)?.classList.remove('hidden');
-    document.querySelectorAll('.sidebar li').forEach(li => li.classList.remove('active'));
-    document.querySelector(`.sidebar a[data-page="${pageId}"]`)?.parentElement.classList.add('active');
-    if (!loadedPages[pageId]) { loadPageData(pageId);    loadedPages[pageId] = true; }
-    else                      { refreshPageData(pageId); }
+
+    document.querySelectorAll('.page').forEach((p) => p.classList.toggle('hidden', p.id !== pageId));
+    document.querySelectorAll('.sidebar-nav a').forEach((a) => {
+        if (a.dataset.page === pageId) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+    });
+    document.getElementById('topbarTitle').textContent = PAGE_TITLES[pageId];
+    document.title = `${PAGE_TITLES[pageId]} | IO-DSS`;
+    setDrawerOpen(false, { restoreFocus: false });
+    window.scrollTo(0, 0);
+    if (moveFocus) document.querySelector(`#${pageId} h1`)?.focus({ preventScroll: true });
+
+    // First visit loads with skeletons; later visits refresh in place without blanking content.
+    const silent = !!loadedPages[pageId];
+    loadedPages[pageId] = true;
+    PAGE_LOADERS[pageId](silent);
 }
 
-// ── Auto-refresh dashboard ───────────────────────────────────────────────────
-function startAutoRefresh() {
-    if (refreshInterval) clearInterval(refreshInterval);
-    refreshInterval = setInterval(() => {
-        const dash = document.getElementById('dashboard');
-        if (dash && !dash.classList.contains('hidden') && !document.hidden)
-            if (typeof loadDashboard === 'function') loadDashboard(true);
-    }, 10000);
-}
-function stopAutoRefresh() { clearInterval(refreshInterval); refreshInterval = null; }
-document.addEventListener('visibilitychange', () =>
-    document.hidden ? stopAutoRefresh() : startAutoRefresh()
-);
+// ── Drawer (tablet / mobile) ─────────────────────────────────────────────────
+const drawerQuery = window.matchMedia('(max-width: 1024px)');
 
-// ── Sidebar open/close helper ────────────────────────────────────────────────
-function setSidebarOpen(sidebar, menuToggle, overlay, open) {
+function setDrawerOpen(open, { restoreFocus = true } = {}) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const toggle = document.getElementById('menuToggle');
+    const main = document.getElementById('mainCol');
+    if (!sidebar) return;
+    const wasOpen = sidebar.classList.contains('open');
+    open = open && drawerQuery.matches;
+
+    sidebar.classList.toggle('open', open);
+    overlay.classList.toggle('active', open);
+    toggle.setAttribute('aria-expanded', String(open));
+    toggle.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+    // While the drawer is open, the rest of the page is inert (no tabbing behind the overlay).
+    main.inert = open;
+
     if (open) {
-        sidebar.classList.add('open');
-        overlay.classList.add('active');
-        menuToggle.innerHTML = '<i class="fas fa-times"></i>';
-    } else {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('active');
-        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        (sidebar.querySelector('[aria-current="page"]') || sidebar.querySelector('a'))?.focus();
+    } else if (wasOpen && restoreFocus) {
+        toggle.focus();
     }
 }
 
-// ── Theme toggle ─────────────────────────────────────────────────────────────
+// ── Theme ────────────────────────────────────────────────────────────────────
 function applyTheme(theme) {
+    theme = theme === 'light' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('io-dss-theme', theme);
+    try { localStorage.setItem('io-dss-theme', theme); } catch (_) {}
+
     const btn = document.getElementById('themeToggle');
-    if (!btn) return;
-    if (theme === 'light') {
-        btn.innerHTML = '<i class="fas fa-moon"></i>';
-        btn.title = 'Switch to dark mode';
-    } else {
-        btn.innerHTML = '<i class="fas fa-sun"></i>';
-        btn.title = 'Switch to light mode';
+    if (btn) {
+        const next = theme === 'dark' ? 'light' : 'dark';
+        btn.innerHTML = `<i class="fas ${theme === 'dark' ? 'fa-sun' : 'fa-moon'}" aria-hidden="true"></i>`;
+        btn.setAttribute('aria-label', `Switch to ${next} theme`);
+        btn.title = `Switch to ${next} theme`;
     }
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#0B1120' : '#F2F5F9');
+    // Charts read their colours from CSS variables, so they redraw on this event.
+    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme } }));
 }
 
-// ── DOMContentLoaded ─────────────────────────────────────────────────────────
+// ── Auto-refresh (dashboard only; sequential, never overlapping) ─────────────
+function scheduleRefresh() {
+    clearTimeout(refreshTimer);
+    if (document.hidden) return;
+    refreshTimer = setTimeout(async () => {
+        try {
+            if (currentPage === 'dashboard' && !document.hidden) await loadDashboard(true);
+        } finally {
+            scheduleRefresh();
+        }
+    }, REFRESH_INTERVAL_MS);
+}
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { clearTimeout(refreshTimer); return; }
+    if (currentPage === 'dashboard') loadDashboard(true);   // catch up after being hidden
+    scheduleRefresh();
+});
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+    let saved = 'dark';
+    try { saved = localStorage.getItem('io-dss-theme') || 'dark'; } catch (_) {}
+    applyTheme(saved);
 
-    // Restore saved theme — default is now 'light'
-    const savedTheme = localStorage.getItem('io-dss-theme') || 'light';
-    applyTheme(savedTheme);
-
-    // Theme toggle button
-    document.getElementById('themeToggle')?.addEventListener('click', () => {
-        const current = document.documentElement.getAttribute('data-theme') || 'light';
-        applyTheme(current === 'dark' ? 'light' : 'dark');
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
     });
 
-    // Page nav links
-    document.querySelectorAll('[data-page]').forEach(link => {
-        link.addEventListener('click', e => {
+    // Navigation: links change the hash; the hash is the single source of truth.
+    window.addEventListener('hashchange', () => showPage(pageFromHash()));
+    document.querySelectorAll('.sidebar-nav a').forEach((a) =>
+        a.addEventListener('click', () => setDrawerOpen(false, { restoreFocus: false })));   // also covers re-selecting the current page
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-nav]');
+        if (!btn) return;
+        const page = btn.dataset.nav;
+        if (location.hash === `#${page}`) showPage(page); else location.hash = page;
+    });
+
+    // Drawer controls
+    document.getElementById('menuToggle').addEventListener('click', () => setDrawerOpen(true));
+    document.getElementById('drawerClose').addEventListener('click', () => setDrawerOpen(false));
+    document.getElementById('sidebarOverlay').addEventListener('click', () => setDrawerOpen(false));
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('sidebar').classList.contains('open')) {
             e.preventDefault();
-            const page = link.getAttribute('data-page');
-            if (page) {
-                showPage(page);
-                // Close sidebar on mobile after navigation
-                const sidebar    = document.querySelector('.sidebar');
-                const menuToggle = document.getElementById('menuToggle');
-                const overlay    = document.getElementById('sidebarOverlay');
-                if (sidebar?.classList.contains('open'))
-                    setSidebarOpen(sidebar, menuToggle, overlay, false);
-            }
-        });
+            setDrawerOpen(false);
+        }
     });
+    drawerQuery.addEventListener('change', (e) => { if (!e.matches) setDrawerOpen(false, { restoreFocus: false }); });
 
-    // Hamburger / X toggle
-    const menuToggle = document.getElementById('menuToggle');
-    const sidebar    = document.querySelector('.sidebar');
-    const overlay    = document.getElementById('sidebarOverlay');
-
-    if (menuToggle && sidebar && overlay) {
-        menuToggle.addEventListener('click', e => {
-            e.stopPropagation();
-            setSidebarOpen(sidebar, menuToggle, overlay, !sidebar.classList.contains('open'));
-        });
-        overlay.addEventListener('click', () => setSidebarOpen(sidebar, menuToggle, overlay, false));
-    }
-
-    showPage('dashboard');
-    startAutoRefresh();
+    showPage(pageFromHash(), { moveFocus: false });
+    scheduleRefresh();
 });

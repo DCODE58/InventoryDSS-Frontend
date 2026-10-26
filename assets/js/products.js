@@ -62,10 +62,11 @@ function renderProductsTable() {
             : '<span class="muted" title="Cost or price is missing or invalid">Unavailable</span>';
         const id = escapeHtml(p.product_id);
         const name = escapeHtml(p.name);
+        const nameHtml = helpers.highlight(p.name, productsSearchTerm);
         return `
         <tr>
             <td>${id}</td>
-            <td class="cell-name">${name}</td>
+            <td class="cell-name">${nameHtml}</td>
             <td class="num">${helpers.formatCurrency(p.cost)}</td>
             <td class="num">${helpers.formatCurrency(p.price)}</td>
             <td class="num">${marginCell}</td>

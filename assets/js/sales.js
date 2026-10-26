@@ -173,7 +173,7 @@ async function loadRecentSales(silent = false) {
     }
 }
 
-function saleTime(sale) { const t = new Date(sale.date).getTime(); return isNaN(t) ? 0 : t; }
+function saleTime(sale) { const t = helpers.parseDate(sale.date).getTime(); return isNaN(t) ? 0 : t; }
 
 function getFilteredSortedSales() {
     let sales = allRecentSales;

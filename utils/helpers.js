@@ -16,16 +16,49 @@ const helpers = {
         return Number.isFinite(n) ? n : null;
     },
 
+    /**
+     * Parse a timestamp from the API. Timestamps with no timezone marker
+     * (e.g. "2026-10-26T10:15:00" or "2026-10-26 10:15:00") are treated as UTC,
+     * which is what servers using utcnow() send; the browser would otherwise
+     * read them as local time and show them hours off.
+     * If your backend stores local time instead, change ASSUME_UTC to false.
+     */
+    parseDate(value) {
+        if (value instanceof Date) return value;
+        if (value === null || value === undefined || value === '') return new Date(NaN);
+        let str = String(value).trim();
+        if (helpers.ASSUME_UTC && /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?$/.test(str)) {
+            str = str.replace(' ', 'T') + 'Z';
+        }
+        return new Date(str);
+    },
+    ASSUME_UTC: true,
+
+    /** Escape text and wrap case-insensitive matches of `term` in <mark>. */
+    highlight(text, term) {
+        const str = text === null || text === undefined ? '' : String(text);
+        term = (term || '').trim();
+        if (!term) return escapeHtml(str);
+        const re = new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        let out = '', last = 0, m;
+        while ((m = re.exec(str)) !== null) {
+            if (m[0] === '') { re.lastIndex++; continue; }
+            out += escapeHtml(str.slice(last, m.index)) + '<mark>' + escapeHtml(m[0]) + '</mark>';
+            last = m.index + m[0].length;
+        }
+        return out + escapeHtml(str.slice(last));
+    },
+
     formatDate(dateString) {
         if (!dateString) return '';
-        const date = new Date(dateString);
+        const date = helpers.parseDate(dateString);
         return isNaN(date.getTime()) ? '' : date.toLocaleDateString();
     },
 
     /** Date + time, down to the second — e.g. "21 Oct 2026, 14:32:07". */
     formatDateTime(dateString) {
         if (!dateString) return '';
-        const date = new Date(dateString);
+        const date = helpers.parseDate(dateString);
         if (isNaN(date.getTime())) return '';
         const datePart = date.toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' });
         const timePart = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });

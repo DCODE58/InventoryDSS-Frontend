@@ -70,10 +70,11 @@ function renderInventoryTable() {
             : `<span class="${daysLeft <= 3 ? 'text-danger' : (daysLeft <= 7 ? 'text-warning' : '')}" title="Estimate based on forecast demand">~${daysLeft} day${daysLeft !== 1 ? 's' : ''}</span>`;
         const id = escapeHtml(item.product_id);
         const name = escapeHtml(item.product_name);
+        const nameHtml = helpers.highlight(item.product_name, inventorySearchTerm);
         return `
             <tr>
                 <td>${id}</td>
-                <td class="cell-name">${name}</td>
+                <td class="cell-name">${nameHtml}</td>
                 <td class="num">${escapeHtml(item.stock)}</td>
                 <td class="num">${escapeHtml(item.reorder_point)}</td>
                 <td class="num">${escapeHtml(item.safety_stock)}</td>

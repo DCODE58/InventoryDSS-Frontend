@@ -152,7 +152,7 @@ async function sectionRevenue() {
         sales.forEach((sale) => {
             const price = priceById[sale.product_id];
             const qty = helpers.toNumber(sale.quantity);
-            const when = new Date(sale.date).getTime();
+            const when = helpers.parseDate(sale.date).getTime();
             if (price === null || price === undefined || qty === null || isNaN(when)) { unpriced++; return; }
             const revenue = qty * price;
             const ageDays = (now - when) / DAY_MS;

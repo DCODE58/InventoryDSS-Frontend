@@ -1,361 +1,521 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>IO-DSS | Smart Inventory Optimization</title>
+    <meta name="theme-color" content="#0B1120">
+    <title>IO-DSS | Inventory Decision Support</title>
 
+    <!-- Apply the saved theme before first paint (no flash). Default: dark. -->
+    <script>
+        (function () {
+            var t = 'dark';
+            try { t = localStorage.getItem('io-dss-theme') || 'dark'; } catch (e) {}
+            document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+        })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/layout.css">
     <link rel="stylesheet" href="assets/css/components.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.js"></script>
 </head>
 
 <body>
-<div class="app">
+<a class="skip-link" href="#main">Skip to main content</a>
 
-    <!-- ── Sidebar overlay (tap outside to close on mobile) ── -->
+<div class="app" id="app">
+
+    <!-- ── Sidebar / drawer ───────────────────────────────────── -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- ── Sidebar ──────────────────────────────────────────── -->
-    <aside class="sidebar">
-        <span class="sidebar-app-name">IO-DSS</span>
-        <ul>
-            <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-            <li><a href="#" data-page="products"><i class="fas fa-cube"></i> Products</a></li>
-            <li><a href="#" data-page="inventory"><i class="fas fa-warehouse"></i> Inventory</a></li>
-            <li><a href="#" data-page="sales"><i class="fas fa-shopping-cart"></i> Sales</a></li>
-            <li><a href="#" data-page="analytics"><i class="fas fa-chart-pie"></i> Analytics</a></li>
-        </ul>
+    <aside class="sidebar" id="sidebar" aria-label="Application">
+        <div class="sidebar-head">
+            <span class="brand"><span class="brand-mark" aria-hidden="true"><i class="fas fa-cubes"></i></span>IO-DSS</span>
+            <button type="button" class="icon-btn drawer-close" id="drawerClose" aria-label="Close navigation menu">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
+        </div>
+        <nav class="sidebar-nav" aria-label="Primary">
+            <ul>
+                <li><a href="#dashboard" data-page="dashboard"><i class="fas fa-gauge-high" aria-hidden="true"></i>Dashboard</a></li>
+                <li><a href="#products" data-page="products"><i class="fas fa-cube" aria-hidden="true"></i>Products</a></li>
+                <li><a href="#inventory" data-page="inventory"><i class="fas fa-warehouse" aria-hidden="true"></i>Inventory</a></li>
+                <li><a href="#sales" data-page="sales"><i class="fas fa-cart-shopping" aria-hidden="true"></i>Sales</a></li>
+                <li><a href="#analytics" data-page="analytics"><i class="fas fa-chart-pie" aria-hidden="true"></i>Analytics</a></li>
+            </ul>
+        </nav>
     </aside>
 
-    <!-- ── Main content ──────────────────────────────────────── -->
-    <main class="main-content">
-
-        <!-- Navbar -->
-        <nav class="navbar">
-            <div class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
-                <i class="fas fa-bars"></i>
-            </div>
-
-            <div class="logo">IO-DSS</div>
-
-            <div class="navbar-right">
-                <!-- Light theme is default → show moon icon (to switch to dark) -->
-                <button class="theme-toggle" id="themeToggle"
-                        title="Switch to dark mode" aria-label="Toggle theme">
-                    <i class="fas fa-moon"></i>
+    <div class="main-col" id="mainCol">
+        <header class="topbar">
+            <button type="button" class="icon-btn menu-toggle" id="menuToggle"
+                    aria-label="Open navigation menu" aria-controls="sidebar" aria-expanded="false">
+                <i class="fas fa-bars" aria-hidden="true"></i>
+            </button>
+            <span class="topbar-title" id="topbarTitle">Dashboard</span>
+            <div class="topbar-right">
+                <button type="button" class="icon-btn" id="themeToggle" aria-label="Switch to light theme" title="Switch to light theme">
+                    <i class="fas fa-sun" aria-hidden="true"></i>
                 </button>
-                <div class="user-info">
-                    <i class="fas fa-user-circle"></i>
-                    <span>Admin</span>
-                </div>
+                <span class="user-chip" title="Signed-in label (display only)"><i class="fas fa-circle-user" aria-hidden="true"></i><span>Admin</span></span>
             </div>
-        </nav>
+        </header>
 
-        <div class="page-container">
+        <main class="page-container" id="main" tabindex="-1">
 
             <!-- ═══════════ DASHBOARD ═══════════ -->
-            <section id="dashboard" class="page">
-                <h1>Dashboard</h1>
+            <section id="dashboard" class="page" aria-labelledby="dashboard-title">
+                <header class="page-header">
+                    <div>
+                        <h1 id="dashboard-title" tabindex="-1">Dashboard</h1>
+                        <p class="page-sub">What needs attention in your stock right now, and what to order next.</p>
+                    </div>
+                    <div class="page-actions">
+                        <span class="refresh-status" id="dash-status"></span>
+                        <button type="button" class="btn btn-secondary" id="dash-refresh"><i class="fas fa-rotate" aria-hidden="true"></i>Refresh</button>
+                        <button type="button" class="btn btn-primary" data-nav="sales"><i class="fas fa-plus" aria-hidden="true"></i>Record sale</button>
+                    </div>
+                </header>
 
-                <div class="stats-grid">
-                    <div class="card">
-                        <h3><i class="fas fa-cube"></i> Total Products</h3>
-                        <p class="stat-value" id="total-products">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-layer-group"></i> Low Stock Items</h3>
-                        <p class="stat-value" id="low-stock">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-triangle-exclamation"></i> Reorder Alerts</h3>
-                        <p class="stat-value" id="reorder-alerts">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-chart-line"></i> Forecasted Demand (30d)</h3>
-                        <p class="stat-value" id="forecast-demand">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-coins"></i> Inventory Value</h3>
-                        <p class="stat-value" id="inventory-value">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-sack-dollar"></i> Revenue (30d)</h3>
-                        <p class="stat-value" id="revenue-30d">—</p>
-                        <p class="stat-delta" id="revenue-delta"></p>
-                    </div>
+                <div class="kpi-grid" aria-label="Key metrics">
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-cube"></i></span>
+                        <div class="kpi-body">
+                            <h2 class="kpi-label">Total products</h2>
+                            <p class="kpi-value" id="total-products">—</p>
+                            <p class="kpi-note">In the catalogue</p>
+                        </div>
+                    </article>
+                    <article class="card kpi tone-warn">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-layer-group"></i></span>
+                        <div class="kpi-body">
+                            <h2 class="kpi-label">Low-stock products</h2>
+                            <p class="kpi-value" id="low-stock">—</p>
+                            <p class="kpi-note">Stock at or below reorder point</p>
+                        </div>
+                    </article>
+                    <article class="card kpi tone-danger">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-triangle-exclamation"></i></span>
+                        <div class="kpi-body">
+                            <h2 class="kpi-label">Reorder alerts</h2>
+                            <p class="kpi-value" id="reorder-alerts">—</p>
+                            <p class="kpi-note">Active in the alert list</p>
+                        </div>
+                    </article>
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-chart-line"></i></span>
+                        <div class="kpi-body">
+                            <h2 class="kpi-label">Forecast demand</h2>
+                            <p class="kpi-value" id="forecast-demand">—</p>
+                            <p class="kpi-note" id="forecast-note">Units across all products</p>
+                        </div>
+                    </article>
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-coins"></i></span>
+                        <div class="kpi-body">
+                            <h2 class="kpi-label">Inventory value</h2>
+                            <p class="kpi-value" id="inventory-value">—</p>
+                            <p class="kpi-note">Stock on hand × unit cost</p>
+                        </div>
+                    </article>
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-money-bill-wave"></i></span>
+                        <div class="kpi-body">
+                            <h2 class="kpi-label">Revenue, last 30 days (est.)</h2>
+                            <p class="kpi-value" id="revenue-30d">—</p>
+                            <p class="kpi-note"><span class="stat-delta" id="revenue-delta"></span></p>
+                        </div>
+                    </article>
                 </div>
 
-                <div class="row">
-                    <div class="card alerts-section">
-                        <h2><i class="fas fa-exclamation-triangle"></i> ROP Alerts</h2>
-                        <div id="rop-alerts-list"></div>
-                        <div id="rop-error" class="error-text hidden">Failed to load alerts</div>
-                    </div>
-                    <div class="card eoq-section">
-                        <h2><i class="fas fa-boxes"></i> EOQ Recommendations</h2>
-                        <div id="eoq-list"></div>
-                        <div id="eoq-error" class="error-text hidden">Failed to load EOQ data</div>
-                    </div>
+                <div class="grid-2">
+                    <section class="card" aria-labelledby="rop-title">
+                        <div class="card-head">
+                            <h2 class="card-title" id="rop-title"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i>Reorder-point alerts</h2>
+                            <button type="button" class="btn btn-ghost btn-sm" data-nav="inventory">View inventory</button>
+                        </div>
+                        <div id="rop-alerts-list" class="scroll-list"></div>
+                    </section>
+                    <section class="card" aria-labelledby="eoq-title">
+                        <div class="card-head">
+                            <h2 class="card-title" id="eoq-title"><i class="fas fa-boxes-stacked" aria-hidden="true"></i>EOQ recommendations</h2>
+                            <p class="card-sub">Economic order quantity per product, as calculated by the server.</p>
+                        </div>
+                        <div id="eoq-list" class="scroll-list"></div>
+                    </section>
                 </div>
 
-                <div class="card forecast-section">
-                    <h2><i class="fas fa-chart-bar"></i> Demand Forecast (Next 30 Days)</h2>
-                    <div class="chart-wrapper">
-                        <canvas id="forecast-chart"></canvas>
+                <div class="grid-main-side">
+                    <section class="card" aria-labelledby="forecast-title">
+                        <div class="card-head">
+                            <h2 class="card-title" id="forecast-title"><i class="fas fa-chart-column" aria-hidden="true"></i>Demand forecast by product</h2>
+                            <p class="card-sub" id="forecast-sub">Forecast units per product, as returned by the forecast service.</p>
+                        </div>
+                        <div class="chart-container" id="forecast-container">
+                            <div class="chart-wrapper"><canvas id="forecast-chart" role="img" aria-label="Forecast demand by product"></canvas></div>
+                            <div class="chart-state"></div>
+                            <p class="chart-summary" id="forecast-summary"></p>
+                            <details class="chart-data" id="forecast-data" hidden></details>
+                        </div>
+                    </section>
+                    <section class="card" aria-labelledby="top-title">
+                        <div class="card-head">
+                            <h2 class="card-title" id="top-title"><i class="fas fa-trophy" aria-hidden="true"></i>Top products, last 30 days</h2>
+                        </div>
+                        <div id="top-products-list"></div>
+                        <p class="card-foot">Revenue is estimated at each product's current selling price; sales records don't store the price at the time of sale.</p>
+                    </section>
+                </div>
+
+                <section class="card" aria-labelledby="tg-title">
+                    <div class="card-head">
+                        <h2 class="card-title" id="tg-title"><i class="fab fa-telegram" aria-hidden="true"></i>Alert history (Telegram-style feed)</h2>
+                        <p class="card-sub">Recorded in this browser whenever the dashboard sees a reorder alert. It is a local mirror, not a log of Telegram messages sent by the server.</p>
                     </div>
-                </div>
-
-                <div class="card eoq-section">
-                    <h2><i class="fas fa-ranking-star"></i> Top Products — Revenue (30d)</h2>
-                    <div id="top-products-list"></div>
-                </div>
-
-                <div class="card telegram-preview">
-                    <h2><i class="fab fa-telegram"></i> Telegram Alerts — Full History</h2>
                     <div id="telegram-preview"></div>
-                </div>
+                </section>
             </section>
 
             <!-- ═══════════ PRODUCTS ═══════════ -->
-            <section id="products" class="page hidden">
-                <h1>Product Management</h1>
+            <section id="products" class="page hidden" aria-labelledby="products-title">
+                <header class="page-header">
+                    <div>
+                        <h1 id="products-title" tabindex="-1">Products</h1>
+                        <p class="page-sub">Cost, selling price and margin for every product you stock.</p>
+                    </div>
+                </header>
 
-                <div class="page-toolbar">
-                    <button class="btn btn-primary" id="add-product-btn">
-                        <i class="fas fa-plus"></i> Add Product
-                    </button>
-                    <input type="search" id="products-search" class="table-search" placeholder="Search products…">
+                <div class="toolbar">
+                    <div class="search-field">
+                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" id="products-search" placeholder="Search products" aria-label="Search products" autocomplete="off">
+                    </div>
+                    <span class="toolbar-count" id="products-count" role="status"></span>
+                    <span class="spacer"></span>
+                    <button type="button" class="btn btn-primary" id="add-product-btn"><i class="fas fa-plus" aria-hidden="true"></i>Add Product</button>
                 </div>
 
-                <div class="table-wrapper">
+                <div class="table-wrapper" tabindex="0" role="region" aria-label="Products table">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Cost</th>
-                                <th>Price</th>
-                                <th>Margin</th>
-                                <th>Actions</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col" class="num">Cost</th>
+                                <th scope="col" class="num">Price</th>
+                                <th scope="col" class="num">Margin <span class="th-hint">(profit, % of cost)</span></th>
+                                <th scope="col" class="num">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="products-list">
-                            <tr><td colspan="6">Loading…</td></tr>
+                            <tr><td colspan="6" class="cell-state"><div class="skeleton"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
             <!-- ═══════════ INVENTORY ═══════════ -->
-            <section id="inventory" class="page hidden">
-                <h1>Inventory Levels</h1>
+            <section id="inventory" class="page hidden" aria-labelledby="inventory-title">
+                <header class="page-header">
+                    <div>
+                        <h1 id="inventory-title" tabindex="-1">Inventory</h1>
+                        <p class="page-sub">Stock on hand against reorder point and safety stock.</p>
+                    </div>
+                </header>
 
-                <div class="page-toolbar">
-                    <input type="search" id="inventory-search" class="table-search" placeholder="Search inventory…">
+                <div class="toolbar">
+                    <div class="search-field">
+                        <i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" id="inventory-search" placeholder="Search inventory" aria-label="Search inventory" autocomplete="off">
+                    </div>
+                    <span class="toolbar-count" id="inventory-count" role="status"></span>
                 </div>
+                <p class="note"><i class="fas fa-circle-info" aria-hidden="true"></i><span><strong>Days left is an estimate</strong> based on current stock and forecast daily demand. It is not a guarantee of availability.</span></p>
 
-                <div class="table-wrapper">
+                <div class="table-wrapper" tabindex="0" role="region" aria-label="Inventory table">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>Product</th>
-                                <th>Stock</th>
-                                <th>Reorder Pt.</th>
-                                <th>Safety Stock</th>
-                                <th>Days Left</th>
-                                <th>Status</th>
-                                <th>Action</th>
+                                <th scope="col">ID</th>
+                                <th scope="col">Product</th>
+                                <th scope="col" class="num">Stock</th>
+                                <th scope="col" class="num">Reorder pt.</th>
+                                <th scope="col" class="num">Safety stock</th>
+                                <th scope="col" class="num">Days left (est.)</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="num">Action</th>
                             </tr>
                         </thead>
                         <tbody id="inventory-list">
-                            <tr><td colspan="8">Loading…</td></tr>
+                            <tr><td colspan="8" class="cell-state"><div class="skeleton"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
             </section>
 
             <!-- ═══════════ SALES ═══════════ -->
-            <section id="sales" class="page hidden">
-                <h1>Record Sale</h1>
+            <section id="sales" class="page hidden" aria-labelledby="sales-title">
+                <header class="page-header">
+                    <div>
+                        <h1 id="sales-title" tabindex="-1">Sales</h1>
+                        <p class="page-sub">Record a sale and review what has sold.</p>
+                    </div>
+                </header>
 
-                <div class="card">
-                    <form id="sales-form">
-                        <div class="form-group">
-                            <label for="product-id">Product</label>
-                            <select id="product-id" required>
-                                <option value="">Select Product</option>
-                            </select>
+                <section class="card" aria-labelledby="record-title">
+                    <div class="card-head"><h2 class="card-title" id="record-title"><i class="fas fa-cash-register" aria-hidden="true"></i>Record sale</h2></div>
+                    <form id="sales-form" novalidate>
+                        <div id="sales-form-alert" class="inline-alert is-error hidden" role="alert"><i class="fas fa-circle-exclamation" aria-hidden="true"></i><span></span></div>
+                        <div class="sale-form-grid">
+                            <div>
+                                <div class="field">
+                                    <label for="sale-product-search">Find product</label>
+                                    <input type="search" id="sale-product-search" placeholder="Type to narrow the list" autocomplete="off">
+                                </div>
+                                <div class="field">
+                                    <label for="product-id">Product</label>
+                                    <select id="product-id" required aria-describedby="sale-product-hint product-id-error">
+                                        <option value="">Select product</option>
+                                    </select>
+                                    <p class="hint" id="sale-product-hint"></p>
+                                    <p class="field-error hidden" id="product-id-error"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="field">
+                                    <label for="quantity">Quantity</label>
+                                    <input type="number" id="quantity" min="1" step="1" inputmode="numeric" required aria-describedby="quantity-hint quantity-error">
+                                    <p class="hint" id="quantity-hint"></p>
+                                    <p class="field-error hidden" id="quantity-error"></p>
+                                </div>
+                                <p class="sale-preview" id="sale-preview" aria-live="polite">Choose a product and quantity to see the total.</p>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="quantity">Quantity</label>
-                            <input type="number" id="quantity" min="1" required>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="sale-submit">Record Sale</button>
+                            <span class="muted" style="font-size:.8125rem">Stock is confirmed by the server when you submit.</span>
                         </div>
-                        <p class="sale-preview" id="sale-preview"></p>
-                        <button type="submit" class="btn btn-primary">Record Sale</button>
                     </form>
-                </div>
+                </section>
 
-                <div class="page-toolbar">
-                    <h2 style="margin:0;">Recent Sales</h2>
-                    <div class="sales-filters">
-                        <select id="sales-product-filter" class="table-search" style="max-width:180px;">
-                            <option value="">All products</option>
-                        </select>
-                        <select id="sales-range" class="table-search" style="max-width:150px;">
+                <div class="toolbar">
+                    <h2>Sales history</h2>
+                    <span class="spacer"></span>
+                    <div class="filters">
+                        <label class="sr-only" for="sales-product-filter">Filter by product</label>
+                        <select id="sales-product-filter"><option value="">All products</option></select>
+                        <label class="sr-only" for="sales-range">Date range</label>
+                        <select id="sales-range">
                             <option value="7">Last 7 days</option>
                             <option value="30" selected>Last 30 days</option>
                             <option value="90">Last 90 days</option>
                         </select>
-                        <select id="sales-sort" class="table-search" style="max-width:140px;">
+                        <label class="sr-only" for="sales-sort">Sort order</label>
+                        <select id="sales-sort">
                             <option value="newest">Newest first</option>
                             <option value="oldest">Oldest first</option>
                         </select>
-                        <button type="button" class="btn btn-secondary" id="sales-export-btn">
-                            <i class="fas fa-download"></i> Export CSV
-                        </button>
+                        <button type="button" class="btn btn-secondary" id="sales-export-btn"><i class="fas fa-download" aria-hidden="true"></i>Export CSV</button>
                     </div>
                 </div>
-                <p class="sales-total" id="sales-total"></p>
+                <p class="summary-strip" id="sales-total" role="status"></p>
 
-                <div class="table-wrapper">
+                <div class="table-wrapper" tabindex="0" role="region" aria-label="Sales history table">
                     <table class="data-table">
                         <thead>
                             <tr>
-                                <th>Sale ID</th>
-                                <th>Product</th>
-                                <th>Quantity</th>
-                                <th>Revenue</th>
-                                <th>Date</th>
+                                <th scope="col">Sale ID</th>
+                                <th scope="col">Product</th>
+                                <th scope="col" class="num">Quantity</th>
+                                <th scope="col" class="num">Revenue <span class="th-hint">(est.)</span></th>
+                                <th scope="col">Date</th>
                             </tr>
                         </thead>
                         <tbody id="recent-sales-list">
-                            <tr><td colspan="5">No sales recorded yet</td></tr>
+                            <tr><td colspan="5" class="cell-state"><div class="skeleton"></div></td></tr>
                         </tbody>
                     </table>
                 </div>
+                <p class="card-foot">Revenue is estimated at each product's <em>current</em> selling price. Sales records don't store the price at the time of sale, so figures for older sales change if a price has changed.</p>
                 <div class="pagination" id="sales-pagination"></div>
             </section>
 
-            <section id="analytics" class="page hidden">
-                <h1>Analytics</h1>
+            <!-- ═══════════ ANALYTICS ═══════════ -->
+            <section id="analytics" class="page hidden" aria-labelledby="analytics-title">
+                <header class="page-header">
+                    <div>
+                        <h1 id="analytics-title" tabindex="-1">Analytics</h1>
+                        <p class="page-sub">Revenue, sellers and margins for the period you choose.</p>
+                    </div>
+                    <div class="page-actions">
+                        <label class="sr-only" for="analytics-range">Reporting range</label>
+                        <select id="analytics-range" style="width:auto;min-width:150px">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                        </select>
+                        <button type="button" class="btn btn-secondary" id="analytics-export-btn"><i class="fas fa-download" aria-hidden="true"></i>Export best sellers CSV</button>
+                    </div>
+                </header>
 
-                <div class="page-toolbar">
-                    <select id="analytics-range" class="table-search" style="max-width:160px;">
-                        <option value="7">Last 7 days</option>
-                        <option value="30" selected>Last 30 days</option>
-                        <option value="90">Last 90 days</option>
-                    </select>
-                    <button type="button" class="btn btn-secondary" id="analytics-export-btn">
-                        <i class="fas fa-download"></i> Export Best Sellers CSV
-                    </button>
+                <p class="note note-warning"><i class="fas fa-circle-info" aria-hidden="true"></i><span><strong>These figures are estimates.</strong> Sales records don't store the selling price or cost at the time of sale, so revenue and gross profit use each product's current price and cost.</span></p>
+                <p class="note hidden" id="analytics-unpriced"><i class="fas fa-circle-info" aria-hidden="true"></i><span></span></p>
+
+                <div class="kpi-grid cols-4" aria-label="Analytics metrics">
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-money-bill-wave"></i></span>
+                        <div class="kpi-body"><h2 class="kpi-label">Total revenue (est.)</h2><p class="kpi-value" id="an-total-revenue">—</p><p class="kpi-note" id="an-period-note"></p></div>
+                    </article>
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-cubes"></i></span>
+                        <div class="kpi-body"><h2 class="kpi-label">Units sold</h2><p class="kpi-value" id="an-units-sold">—</p><p class="kpi-note">Sum of sale quantities</p></div>
+                    </article>
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-receipt"></i></span>
+                        <div class="kpi-body"><h2 class="kpi-label">Average order value (est.)</h2><p class="kpi-value" id="an-aov">—</p><p class="kpi-note">Per sale record</p></div>
+                    </article>
+                    <article class="card kpi">
+                        <span class="kpi-icon" aria-hidden="true"><i class="fas fa-coins"></i></span>
+                        <div class="kpi-body"><h2 class="kpi-label">Gross profit (est.)</h2><p class="kpi-value" id="an-gross-profit">—</p><p class="kpi-note">Revenue minus current cost</p></div>
+                    </article>
                 </div>
 
-                <div class="stats-grid">
-                    <div class="card">
-                        <h3><i class="fas fa-sack-dollar"></i> Total Revenue</h3>
-                        <p class="stat-value" id="an-total-revenue">—</p>
+                <section class="card" aria-labelledby="trend-title">
+                    <div class="card-head"><h2 class="card-title" id="trend-title"><i class="fas fa-chart-line" aria-hidden="true"></i>Revenue trend (est.)</h2></div>
+                    <div class="chart-container" id="trend-container">
+                        <div class="chart-wrapper"><canvas id="revenue-trend-chart" role="img" aria-label="Estimated revenue per day"></canvas></div>
+                        <div class="chart-state"></div>
+                        <p class="chart-summary" id="trend-summary"></p>
+                        <details class="chart-data" id="trend-data" hidden></details>
                     </div>
-                    <div class="card">
-                        <h3><i class="fas fa-cubes"></i> Units Sold</h3>
-                        <p class="stat-value" id="an-units-sold">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-receipt"></i> Avg. Order Value</h3>
-                        <p class="stat-value" id="an-aov">—</p>
-                    </div>
-                    <div class="card">
-                        <h3><i class="fas fa-coins"></i> Gross Profit (est.)</h3>
-                        <p class="stat-value" id="an-gross-profit">—</p>
-                    </div>
-                </div>
+                </section>
 
-                <div class="card forecast-section">
-                    <h2><i class="fas fa-chart-line"></i> Revenue Trend</h2>
-                    <div class="chart-wrapper">
-                        <canvas id="revenue-trend-chart"></canvas>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="card eoq-section">
-                        <h2><i class="fas fa-trophy"></i> Best Sellers (by revenue)</h2>
+                <div class="grid-2">
+                    <section class="card" aria-labelledby="best-title">
+                        <div class="card-head"><h2 class="card-title" id="best-title"><i class="fas fa-trophy" aria-hidden="true"></i>Best sellers by revenue</h2></div>
                         <div id="best-sellers-list"></div>
-                    </div>
-                    <div class="card alerts-section">
-                        <h2><i class="fas fa-box-archive"></i> Dead Stock (no sales in range)</h2>
-                        <div id="dead-stock-list"></div>
-                    </div>
+                    </section>
+                    <section class="card" aria-labelledby="dead-title">
+                        <div class="card-head">
+                            <h2 class="card-title" id="dead-title"><i class="fas fa-box-archive" aria-hidden="true"></i>No sales in this period</h2>
+                            <p class="card-sub">Products with no recorded sales in the selected range. These are candidates to review, not proof that stock is obsolete.</p>
+                        </div>
+                        <div id="dead-stock-list" class="scroll-list"></div>
+                    </section>
                 </div>
 
-                <div class="row">
-                    <div class="card eoq-section">
-                        <h2><i class="fas fa-arrow-trend-up"></i> Best Margins</h2>
+                <div class="grid-2">
+                    <section class="card" aria-labelledby="bm-title">
+                        <div class="card-head"><h2 class="card-title" id="bm-title"><i class="fas fa-arrow-trend-up" aria-hidden="true"></i>Highest margins</h2><p class="card-sub">Margin shown as % of cost, from current prices.</p></div>
                         <div id="best-margin-list"></div>
-                    </div>
-                    <div class="card alerts-section">
-                        <h2><i class="fas fa-arrow-trend-down"></i> Worst Margins</h2>
+                    </section>
+                    <section class="card" aria-labelledby="wm-title">
+                        <div class="card-head"><h2 class="card-title" id="wm-title"><i class="fas fa-arrow-trend-down" aria-hidden="true"></i>Lowest margins</h2><p class="card-sub">Margin shown as % of cost, from current prices.</p></div>
                         <div id="worst-margin-list"></div>
-                    </div>
+                    </section>
                 </div>
             </section>
 
-        </div><!-- /page-container -->
-    </main>
-</div><!-- /app -->
+        </main>
+    </div>
+</div>
 
-<!-- ═══════════ MODALS ═══════════ -->
+<!-- ═══════════ MODALS (siblings of .app so the app can be made inert) ═══════════ -->
 
 <div id="product-modal" class="modal hidden">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h2 id="modal-title">Add Product</h2>
-        <form id="product-form">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-head">
+            <div><h2 id="modal-title">Add Product</h2><p class="modal-sub" id="product-modal-sub"></p></div>
+            <button type="button" class="icon-btn close-modal" aria-label="Close dialog"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <form id="product-form" novalidate>
             <input type="hidden" id="product-id-edit">
-            <div class="form-group">
-                <label>Product Name</label>
-                <input type="text" id="product-name" required>
+            <div id="product-form-alert" class="inline-alert hidden" role="alert"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i><span></span></div>
+            <fieldset>
+                <legend>Product details</legend>
+                <div class="field">
+                    <label for="product-name">Product name</label>
+                    <input type="text" id="product-name" maxlength="100" autocomplete="off" required aria-describedby="product-name-error">
+                    <p class="field-error hidden" id="product-name-error"></p>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Pricing (Ksh)</legend>
+                <div class="field-row">
+                    <div class="field">
+                        <label for="product-cost">Cost</label>
+                        <input type="number" step="0.01" min="0" inputmode="decimal" id="product-cost" required aria-describedby="product-cost-error">
+                        <p class="field-error hidden" id="product-cost-error"></p>
+                    </div>
+                    <div class="field">
+                        <label for="product-price">Selling price</label>
+                        <input type="number" step="0.01" min="0" inputmode="decimal" id="product-price" required aria-describedby="product-price-error">
+                        <p class="field-error hidden" id="product-price-error"></p>
+                    </div>
+                </div>
+            </fieldset>
+            <fieldset>
+                <legend>Stock</legend>
+                <div class="field">
+                    <label for="product-stock">Stock quantity</label>
+                    <input type="number" step="1" min="0" inputmode="numeric" id="product-stock" value="0" required aria-describedby="product-stock-error">
+                    <p class="field-error hidden" id="product-stock-error"></p>
+                </div>
+            </fieldset>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="product-save">Save</button>
             </div>
-            <div class="form-group">
-                <label>Cost (Ksh)</label>
-                <input type="number" step="0.01" id="product-cost" required>
-            </div>
-            <div class="form-group">
-                <label>Price (Ksh)</label>
-                <input type="number" step="0.01" id="product-price" required>
-            </div>
-            <div class="form-group">
-                <label>Stock Quantity</label>
-                <input type="number" id="product-stock" min="0" value="0" required>
-            </div>
-            <button type="submit" class="btn btn-primary">Save</button>
         </form>
     </div>
 </div>
 
 <div id="stock-modal" class="modal hidden">
-    <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h2>Update Stock</h2>
-        <form id="stock-form">
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="stock-modal-title">
+        <div class="modal-head">
+            <div><h2 id="stock-modal-title">Update Stock</h2></div>
+            <button type="button" class="icon-btn close-modal" aria-label="Close dialog"><i class="fas fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <form id="stock-form" novalidate>
             <input type="hidden" id="stock-product-id">
-            <div class="form-group">
-                <label>New Stock Quantity</label>
-                <input type="number" id="new-stock" min="0" required>
+            <dl class="stat-pair">
+                <div><dt>Product</dt><dd id="stock-product-name">—</dd></div>
+                <div><dt>Current stock</dt><dd id="stock-current">—</dd></div>
+            </dl>
+            <div class="field">
+                <label for="new-stock">New stock quantity</label>
+                <input type="number" id="new-stock" min="0" step="1" inputmode="numeric" required aria-describedby="new-stock-error">
+                <p class="field-error hidden" id="new-stock-error"></p>
             </div>
-            <button type="submit" class="btn btn-primary">Update</button>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="stock-save">Update</button>
+            </div>
         </form>
     </div>
 </div>
 
-<!-- Script load order: config → constants → helpers → toast → api → app → page modules -->
+<div id="confirm-modal" class="modal hidden" data-backdrop-close="true">
+    <div class="modal-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message" style="max-width:440px">
+        <div class="modal-head"><h2 id="confirm-title">Are you sure?</h2></div>
+        <p class="confirm-text" id="confirm-message"></p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" id="confirm-cancel">Cancel</button>
+            <button type="button" class="btn btn-danger-solid" id="confirm-ok">Delete</button>
+        </div>
+    </div>
+</div>
+
+<!-- Script load order: config → constants → helpers → toast → ui → api → app → page modules -->
 <script src="config/config.js"></script>
 <script src="utils/constants.js"></script>
 <script src="utils/helpers.js"></script>
 <script src="assets/js/toast.js"></script>
+<script src="assets/js/ui.js"></script>
 <script src="assets/js/api.js"></script>
 <script src="assets/js/app.js"></script>
 <script src="assets/js/dashboard.js"></script>
@@ -365,4 +525,4 @@
 <script src="assets/js/analytics.js"></script>
 
 </body>
-    </html>
+</html>

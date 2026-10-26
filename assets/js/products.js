@@ -1,184 +1,256 @@
 let currentProducts = [];
 let productsSearchTerm = '';
+let productsRendered = false;
+let productsLoadSeq = 0;
+let savingProduct = false;
+const deletingIds = new Set();
+
+const $p = (id) => document.getElementById(id);
 
 async function loadProducts(silent = false) {
-    if (!silent) showSkeleton('products');
+    const seq = ++productsLoadSeq;
+    const tbody = $p('products-list');
+    if (!productsRendered) ui.tableSkeleton(tbody, 6);
     try {
-        currentProducts = await api.getProducts();
-        renderProductsTable(filterProducts(currentProducts));
-        if (!silent) toast.success('Products loaded');
+        const products = await api.getProducts();
+        if (seq !== productsLoadSeq) return;           // a newer load superseded this one
+        currentProducts = products;
+        productsRendered = true;
+        renderProductsTable();
     } catch (error) {
+        if (seq !== productsLoadSeq) return;
         console.error('Error loading products:', error);
-        document.getElementById('products-list').innerHTML = '<tr><td colspan="6">Failed to load products</td></tr>';
-        if (!silent) toast.error('Failed to load products');
+        if (!productsRendered) {
+            ui.tableState(tbody, 6, { kind: 'error', title: "Products couldn't be loaded", text: ui.errorDetail(error) || 'Check your connection and try again.', actionLabel: 'Try again', onAction: () => loadProducts(false) });
+            $p('products-count').textContent = '';
+        } else if (!silent) {
+            ui.reportError(error, "Couldn't refresh products");
+        }
     }
 }
 
 function filterProducts(products) {
     const term = productsSearchTerm.trim().toLowerCase();
     if (!term) return products;
-    return products.filter(p => p.name.toLowerCase().includes(term));
+    return products.filter((p) => String(p.name ?? '').toLowerCase().includes(term));
 }
 
-function renderProductsTable(products) {
-    const tbody = document.getElementById('products-list');
+function renderProductsTable() {
+    const tbody = $p('products-list');
+    const products = filterProducts(currentProducts);
+    const countEl = $p('products-count');
+    countEl.textContent = productsSearchTerm.trim()
+        ? `${products.length} of ${currentProducts.length} products`
+        : `${currentProducts.length} product${currentProducts.length !== 1 ? 's' : ''}`;
+
     if (!products.length) {
-        const message = productsSearchTerm
-            ? 'No products match your search.'
-            : 'No products yet. Click "Add Product" to start.';
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">${message}</td></tr>`;
+        if (productsSearchTerm.trim()) {
+            ui.tableState(tbody, 6, { kind: 'empty', icon: 'fa-magnifying-glass', title: 'No products match your search', text: 'Try a different name or clear the search.' });
+        } else {
+            ui.tableState(tbody, 6, { kind: 'empty', icon: 'fa-cube', title: 'No products yet', text: 'Add your first product to start tracking stock and sales.', actionLabel: 'Add Product', onAction: () => openProductModal(null, $p('add-product-btn')) });
+        }
         return;
     }
-    tbody.innerHTML = products.map(p => {
+
+    tbody.innerHTML = products.map((p) => {
         const margin = helpers.calculateMargin(p.cost, p.price);
         const marginCell = margin
-            ? `<span class="badge ${helpers.getMarginBadgeClass(margin.percent)}">
-                 <span class="margin-arrow" aria-hidden="true">${margin.amount >= 0 ? '▲' : '▼'}</span>
-                 ${helpers.formatCurrency(margin.amount)} (${margin.percent.toFixed(1)}%)
+            ? `<span class="margin-cell">
+                   <span class="badge ${helpers.getMarginBadgeClass(margin.percent)}"><i class="fas ${margin.amount < 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up'}" aria-hidden="true"></i>${helpers.formatCurrency(margin.amount)}</span>
+                   <small>${margin.percent.toFixed(1)}% of cost</small>
                </span>`
-            : '—';
+            : '<span class="muted" title="Cost or price is missing or invalid">Unavailable</span>';
+        const id = escapeHtml(p.product_id);
+        const name = escapeHtml(p.name);
         return `
         <tr>
-            <td>${p.product_id}</td>
-            <td>${escapeHtml(p.name)}</td>
-            <td>${helpers.formatCurrency(p.cost)}</td>
-            <td>${helpers.formatCurrency(p.price)}</td>
-            <td>${marginCell}</td>
-            <td>
-                <button class="btn btn-secondary edit-product" data-id="${p.product_id}">Edit</button>
-                <button class="btn btn-danger delete-product" data-id="${p.product_id}">Delete</button>
+            <td>${id}</td>
+            <td class="cell-name">${name}</td>
+            <td class="num">${helpers.formatCurrency(p.cost)}</td>
+            <td class="num">${helpers.formatCurrency(p.price)}</td>
+            <td class="num">${marginCell}</td>
+            <td class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm edit-product" data-id="${id}" aria-label="Edit ${name}"><i class="fas fa-pen" aria-hidden="true"></i>Edit</button>
+                <button type="button" class="btn btn-danger btn-sm delete-product" data-id="${id}" aria-label="Delete ${name}"${deletingIds.has(String(p.product_id)) ? ' disabled' : ''}><i class="fas fa-trash-can" aria-hidden="true"></i>Delete</button>
             </td>
-        </tr>
-    `;
+        </tr>`;
     }).join('');
-    document.querySelectorAll('.edit-product').forEach(btn => btn.addEventListener('click', () => openProductModal(btn.dataset.id)));
-    document.querySelectorAll('.delete-product').forEach(btn => btn.addEventListener('click', () => deleteProduct(btn.dataset.id)));
 }
 
-function openProductModal(productId = null) {
-    const modal = document.getElementById('product-modal');
-    const title = document.getElementById('modal-title');
-    const idField = document.getElementById('product-id-edit');
-    const nameField = document.getElementById('product-name');
-    const costField = document.getElementById('product-cost');
-    const priceField = document.getElementById('product-price');
-    const stockField = document.getElementById('product-stock');
-    if (productId) {
-        const product = currentProducts.find(p => p.product_id == productId);
+// ─── Modal ───────────────────────────────────────────────────────────────────
+function setProductModalMode(isEdit) {
+    $p('modal-title').textContent = isEdit ? 'Edit Product' : 'Add Product';
+}
+
+function openProductModal(productId = null, opener) {
+    const form = $p('product-form');
+    ui.clearFieldErrors(form);
+    ui.formAlert('product-form-alert', '');
+
+    if (productId !== null && productId !== undefined && productId !== '') {
+        const product = currentProducts.find((p) => String(p.product_id) === String(productId));
         if (!product) return;
-        title.textContent = 'Edit Product';
-        idField.value = product.product_id;
-        nameField.value = product.name;
-        costField.value = product.cost;
-        priceField.value = product.price;
-        stockField.value = product.stock ?? 0;
+        setProductModalMode(true);
+        $p('product-modal-sub').textContent = `Product ID ${product.product_id}`;
+        $p('product-id-edit').value = product.product_id;
+        $p('product-name').value = product.name ?? '';
+        $p('product-cost').value = product.cost ?? '';
+        $p('product-price').value = product.price ?? '';
+        $p('product-stock').value = product.stock ?? 0;
     } else {
-        title.textContent = 'Add Product';
-        idField.value = '';
-        nameField.value = '';
-        costField.value = '';
-        priceField.value = '';
-        stockField.value = 0;
+        setProductModalMode(false);
+        $p('product-modal-sub').textContent = 'Stock is saved separately from the product details.';
+        $p('product-id-edit').value = '';
+        $p('product-name').value = '';
+        $p('product-cost').value = '';
+        $p('product-price').value = '';
+        $p('product-stock').value = 0;
     }
-    modal.classList.remove('hidden');
+    ui.openModal('product-modal', { opener, focus: 'product-name' });
 }
 
 /**
- * Validates the product form before it ever reaches the API. Returns a
- * parsed, trimmed payload on success or null (after showing a toast) on
- * failure — mirrors the checks the backend also enforces, so a bad value
- * gets a specific, immediate message instead of a generic server error.
+ * Validates the form and shows inline messages. Returns a parsed payload, or
+ * null after focusing the first invalid field.
  */
 function validateProductForm() {
-    const name = document.getElementById('product-name').value.trim();
-    const cost = parseFloat(document.getElementById('product-cost').value);
-    const price = parseFloat(document.getElementById('product-price').value);
-    const stock = parseInt(document.getElementById('product-stock').value, 10);
+    const form = $p('product-form');
+    ui.clearFieldErrors(form);
+    const errors = [];
+    const req = (id, msg) => errors.push([id, msg]);
 
-    if (!name) {
-        toast.warning('Product name is required');
+    const name = $p('product-name').value.trim();
+    const costRaw = $p('product-cost').value.trim();
+    const priceRaw = $p('product-price').value.trim();
+    const stockRaw = $p('product-stock').value.trim();
+    const cost = costRaw === '' ? null : helpers.toNumber(costRaw);
+    const price = priceRaw === '' ? null : helpers.toNumber(priceRaw);
+    const stock = stockRaw === '' ? null : helpers.toNumber(stockRaw);
+
+    if (!name) req('product-name', 'Enter a product name.');
+    else if (name.length > 100) req('product-name', 'Product name must be 100 characters or fewer.');
+
+    if (cost === null) req('product-cost', costRaw === '' ? 'Enter the cost.' : 'Enter a valid number.');
+    else if (cost < 0) req('product-cost', 'Cost can’t be negative.');
+
+    if (price === null) req('product-price', priceRaw === '' ? 'Enter the selling price.' : 'Enter a valid number.');
+    else if (price < 0) req('product-price', 'Selling price can’t be negative.');
+
+    if (stock === null) req('product-stock', stockRaw === '' ? 'Enter the stock quantity (0 if none).' : 'Enter a whole number.');
+    else if (!Number.isInteger(stock) || stock < 0) req('product-stock', 'Stock must be a whole number, 0 or more.');
+
+    if (errors.length) {
+        errors.forEach(([id, msg]) => ui.fieldError(id, msg));
+        ui.formAlert('product-form-alert', `Fix ${errors.length} field${errors.length !== 1 ? 's' : ''} before saving.`);
+        $p(errors[0][0]).focus();
         return null;
     }
-    if (name.length > 100) {
-        toast.warning('Product name must be under 100 characters');
-        return null;
-    }
-    if (isNaN(cost) || cost < 0) {
-        toast.warning('Enter a valid, non-negative cost');
-        return null;
-    }
-    if (isNaN(price) || price < 0) {
-        toast.warning('Enter a valid, non-negative price');
-        return null;
-    }
-    if (isNaN(stock) || stock < 0) {
-        toast.warning('Enter a valid, non-negative stock quantity');
-        return null;
-    }
+    ui.formAlert('product-form-alert', '');
     return { name, cost, price, stock };
 }
 
 async function saveProduct(event) {
     event.preventDefault();
-    const id = document.getElementById('product-id-edit').value;
-
+    if (savingProduct) return;                         // block double submit
     const validated = validateProductForm();
     if (!validated) return;
+
     const { name, cost, price, stock } = validated;
     const productData = { name, cost, price };
+    const btn = $p('product-save');
+    let id = $p('product-id-edit').value;
+    const wasNew = !id;
+    let phase = 'product';
 
+    savingProduct = true;
+    ui.setBusy(btn, true, 'Saving…');
+    ui.setModalBusy('product-modal', true);
     try {
-        let savedId = id;
         if (id) {
             await api.updateProduct(id, productData);
-            toast.success('Product updated');
         } else {
             const result = await api.addProduct(productData);
-            savedId = result.product_id ?? result.id ?? id;
-            toast.success('Product added');
+            id = result && (result.product_id ?? result.id) || '';
+            if (id) {
+                // The product now exists. From here on a retry must UPDATE it, never create it again.
+                $p('product-id-edit').value = id;
+                setProductModalMode(true);
+                $p('product-modal-sub').textContent = `Product ID ${id}`;
+            }
         }
-        // Set initial stock via the inventory endpoint
-        if (savedId) {
-            await api.updateStock(savedId, stock);
+
+        phase = 'stock';
+        if (id) {
+            await api.updateStock(id, stock);
         }
-        closeModal('product-modal');
+
+        ui.setModalBusy('product-modal', false);
+        ui.closeModal('product-modal', { force: true });
+        if (!id) {
+            toast.warning('Product added, but the server didn’t return its ID, so the stock quantity wasn’t saved. Set it from the Inventory page.');
+        } else {
+            toast.success(wasNew ? 'Product added' : 'Product updated');
+        }
         await loadProducts(true);
+        if (document.activeElement === document.body) (document.querySelector(`.edit-product[data-id="${CSS.escape(String(id))}"]`) || $p('add-product-btn'))?.focus();
     } catch (error) {
-        toast.error('Failed to save product');
+        console.error('Save product failed:', error);
+        if (phase === 'stock' && id) {
+            // Product saved, stock not: report accurately and keep the dialog (now in edit mode) for a safe retry.
+            error.reported = true;
+            ui.formAlert('product-form-alert', `The product was ${wasNew ? 'added' : 'updated'}, but its stock quantity couldn’t be saved (${ui.errorDetail(error) || 'unknown error'}). Press Save to retry; the product won’t be duplicated.`);
+            toast.warning(`Product ${wasNew ? 'added' : 'updated'}, but its stock wasn’t saved. Press Save to retry.`);
+            loadProducts(true);                        // show the saved product behind the dialog
+        } else {
+            ui.reportError(error, 'Failed to save product');
+        }
+    } finally {
+        savingProduct = false;
+        ui.setBusy(btn, false);
+        ui.setModalBusy('product-modal', false);
     }
 }
 
-async function deleteProduct(id) {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+async function deleteProduct(id, opener) {
+    const key = String(id);
+    if (deletingIds.has(key)) return;
+    const product = currentProducts.find((p) => String(p.product_id) === key);
+    const ok = await ui.confirm({
+        title: 'Delete this product?',
+        message: `“${product ? product.name : 'This product'}” will be permanently deleted. This can’t be undone. Related inventory and sales records are handled by the server and may be affected.`,
+        confirmLabel: 'Delete product',
+        opener,
+    });
+    if (!ok) return;
+
+    deletingIds.add(key);
+    renderProductsTable();
     try {
         await api.deleteProduct(id);
         toast.success('Product deleted');
-        await loadProducts(true);
     } catch (error) {
-        toast.error('Delete failed');
+        ui.reportError(error, 'Delete failed');
+    } finally {
+        deletingIds.delete(key);
     }
-}
-
-function closeModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
+    await loadProducts(true);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('add-product-btn').addEventListener('click', () => openProductModal());
-    document.getElementById('product-form').addEventListener('submit', saveProduct);
-    document.querySelectorAll('.close-modal').forEach(btn => btn.addEventListener('click', (e) => {
-        const modal = btn.closest('.modal');
-        if (modal) modal.classList.add('hidden');
-    }));
-    window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.classList.add('hidden'); });
+    $p('add-product-btn').addEventListener('click', (e) => openProductModal(null, e.currentTarget));
+    $p('product-form').addEventListener('submit', saveProduct);
 
-    const searchInput = document.getElementById('products-search');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            productsSearchTerm = e.target.value;
-            renderProductsTable(filterProducts(currentProducts));
-        });
-    }
+    $p('products-list').addEventListener('click', (e) => {
+        const edit = e.target.closest('.edit-product');
+        if (edit) { openProductModal(edit.dataset.id, edit); return; }
+        const del = e.target.closest('.delete-product');
+        if (del && !del.disabled) deleteProduct(del.dataset.id, del);
+    });
+
+    $p('products-search').addEventListener('input', helpers.debounce((e) => {
+        productsSearchTerm = e.target.value;
+        if (productsRendered) renderProductsTable();
+    }, 150));
 });
 
 window.loadProducts = loadProducts;

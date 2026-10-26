@@ -54,7 +54,7 @@ function renderAnalytics(products, sales, days) {
     sales.forEach((sale) => {
         const qty = helpers.toNumber(sale.quantity);
         const price = priceById[sale.product_id];
-        const when = new Date(sale.date);
+        const when = helpers.parseDate(sale.date);
         soldProductIds.add(String(sale.product_id));
         if (qty === null) return;
         totalUnits += qty;

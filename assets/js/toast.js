@@ -1,8 +1,8 @@
 class ToastManager {
     constructor() {
         this.container = null;
-        this.active    = new Map();   // message+type → toast el (dedup)
-        this.MAX_STACK = 5;
+        this.active = new Map();   // type::message → { el, reset } (dedup)
+        this.MAX_STACK = 4;
         this.init();
     }
 
@@ -17,110 +17,103 @@ class ToastManager {
         }
     }
 
-    // Default durations per type (ms)
-    _duration(type) {
-        return { success: 3000, error: 5000, warning: 4000, info: 3000 }[type] ?? 3000;
-    }
-
+    _duration(type) { return { success: 3500, error: 7000, warning: 6000, info: 4000 }[type] ?? 4000; }
     _icon(type) {
-        return {
-            success: 'fa-check-circle',
-            error:   'fa-exclamation-circle',
-            warning: 'fa-exclamation-triangle',
-            info:    'fa-info-circle',
-        }[type] ?? 'fa-info-circle';
+        return { success: 'fa-circle-check', error: 'fa-circle-exclamation', warning: 'fa-triangle-exclamation', info: 'fa-circle-info' }[type] ?? 'fa-circle-info';
     }
+    _reducedMotion() { return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches; }
 
     show(message, type = 'info', duration) {
         const ms = duration ?? this._duration(type);
+        const key = `${type}::${message}`;
 
-        // ── Dedup: bump existing toast instead of stacking a duplicate ────────
-        const dedupKey = `${type}::${message}`;
-        if (this.active.has(dedupKey)) {
-            const existing = this.active.get(dedupKey);
-            existing._resetTimer(ms);
+        // Same message already on screen → extend it instead of stacking a duplicate.
+        const existing = this.active.get(key);
+        if (existing) {
+            existing.reset(ms);
             existing.el.classList.add('toast-bump');
             setTimeout(() => existing.el.classList.remove('toast-bump'), 300);
             return;
         }
-
-        // ── Max-stack: dismiss oldest if over limit ────────────────────────────
         if (this.active.size >= this.MAX_STACK) {
-            const [firstKey, firstEntry] = this.active.entries().next().value;
-            this._dismiss(firstEntry.el, firstKey);
+            const [oldKey, oldEntry] = this.active.entries().next().value;
+            this._dismiss(oldEntry.el, oldKey);
         }
 
-        // ── Build element ──────────────────────────────────────────────────────
         const el = document.createElement('div');
         el.className = `toast toast-${type}`;
+        // Errors interrupt; everything else is announced politely.
         el.setAttribute('role', type === 'error' ? 'alert' : 'status');
-        el.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
 
-        el.innerHTML = `
-            <i class="fas ${this._icon(type)} toast-type-icon"></i>
-            <span class="toast-message">${escapeHtml(message)}</span>
-            <i class="fas fa-times toast-close" role="button" aria-label="Dismiss notification" tabindex="0"></i>
-            <div class="toast-progress"><div class="toast-progress-bar"></div></div>
-        `;
+        const icon = document.createElement('i');
+        icon.className = `fas ${this._icon(type)} toast-type-icon`;
+        icon.setAttribute('aria-hidden', 'true');
 
+        const text = document.createElement('span');
+        text.className = 'toast-message';
+        text.textContent = message;
+
+        const close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'toast-close';
+        close.setAttribute('aria-label', 'Dismiss notification');
+        close.innerHTML = '<i class="fas fa-xmark" aria-hidden="true"></i>';
+
+        const progress = document.createElement('div');
+        progress.className = 'toast-progress';
+        const bar = document.createElement('div');
+        bar.className = 'toast-progress-bar';
+        progress.appendChild(bar);
+
+        el.append(icon, text, close, progress);
         this.container.appendChild(el);
 
-        // ── Progress bar + timer ───────────────────────────────────────────────
-        const bar = el.querySelector('.toast-progress-bar');
-        let startTime  = Date.now();
-        let remaining  = ms;
-        let rafId      = null;
-        let paused     = false;
-
-        const tick = () => {
-            if (paused) return;
-            const elapsed = Date.now() - startTime;
-            const pct     = Math.max(0, 1 - elapsed / remaining);
-            bar.style.transform = `scaleX(${pct})`;
-            if (elapsed >= remaining) { this._dismiss(el, dedupKey); return; }
-            rafId = requestAnimationFrame(tick);
+        // Timer with pause on hover/focus.
+        let timer = null, remaining = ms, startedAt = Date.now();
+        const animateBar = (dur) => {
+            if (this._reducedMotion()) { bar.style.display = 'none'; return; }
+            bar.style.transition = 'none';
+            bar.style.transform = `scaleX(${Math.max(0, dur / ms)})`;
+            void bar.offsetWidth;
+            bar.style.transition = `transform ${dur}ms linear`;
+            bar.style.transform = 'scaleX(0)';
         };
-        rafId = requestAnimationFrame(tick);
-
-        const resetTimer = (newMs) => {
-            remaining  = newMs;
-            startTime  = Date.now();
+        const start = (dur) => {
+            clearTimeout(timer);
+            remaining = dur; startedAt = Date.now();
+            animateBar(dur);
+            timer = setTimeout(() => this._dismiss(el, key), dur);
         };
+        const pause = () => {
+            clearTimeout(timer);
+            remaining -= Date.now() - startedAt;
+            const current = getComputedStyle(bar).transform;
+            bar.style.transition = 'none';
+            bar.style.transform = current === 'none' ? 'scaleX(1)' : current;
+        };
+        const resume = () => start(Math.max(1000, remaining));
 
-        // ── Pause on hover ─────────────────────────────────────────────────────
-        el.addEventListener('mouseenter', () => {
-            paused    = true;
-            remaining = remaining - (Date.now() - startTime);
-            cancelAnimationFrame(rafId);
-        });
-        el.addEventListener('mouseleave', () => {
-            paused    = false;
-            startTime = Date.now();
-            rafId     = requestAnimationFrame(tick);
-        });
+        el.addEventListener('mouseenter', pause);
+        el.addEventListener('mouseleave', resume);
+        el.addEventListener('focusin', pause);
+        el.addEventListener('focusout', resume);
+        close.addEventListener('click', () => this._dismiss(el, key));
 
-        // ── Close button (click + keyboard) ───────────────────────────────────
-        const closeBtn = el.querySelector('.toast-close');
-        const dismiss  = () => this._dismiss(el, dedupKey);
-        closeBtn.addEventListener('click', dismiss);
-        closeBtn.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); dismiss(); }
-        });
-
-        // Store in active map
-        this.active.set(dedupKey, { el, _resetTimer: resetTimer });
+        start(ms);
+        this.active.set(key, { el, reset: (d) => start(d) });
     }
 
-    _dismiss(el, dedupKey) {
+    _dismiss(el, key) {
         if (!el.isConnected) return;
-        this.active.delete(dedupKey);
-        el.style.animation = 'toastOut 0.32s ease forwards';
-        setTimeout(() => el.remove(), 320);
+        this.active.delete(key);
+        if (this._reducedMotion()) { el.remove(); return; }
+        el.classList.add('toast-leaving');
+        setTimeout(() => el.remove(), 220);
     }
 
     success(msg, duration) { this.show(msg, 'success', duration); }
-    error  (msg, duration) { this.show(msg, 'error',   duration); }
-    info   (msg, duration) { this.show(msg, 'info',    duration); }
+    error(msg, duration)   { this.show(msg, 'error', duration); }
+    info(msg, duration)    { this.show(msg, 'info', duration); }
     warning(msg, duration) { this.show(msg, 'warning', duration); }
 }
 
